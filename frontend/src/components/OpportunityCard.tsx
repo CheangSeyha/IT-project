@@ -1,8 +1,21 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import { Opportunity } from '@/types';
-import { Calendar, DollarSign, Bookmark, ShieldCheck, Sparkles, Share2, Check, MapPin, Globe } from 'lucide-react';
+import {
+  Calendar,
+  DollarSign,
+  Bookmark,
+  ShieldCheck,
+  Sparkles,
+  Share2,
+  Check,
+  MapPin,
+  Globe,
+  ArrowUpRight,
+} from 'lucide-react';
 
 interface OpportunityCardProps {
   opportunity: Opportunity;
@@ -19,19 +32,34 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
-  // Category badge colors
+  // Category styling
   const getCategoryTheme = (cat: string) => {
     switch (cat) {
       case 'job':
-        return { badge: 'bg-blue-50 text-blue-700 border-blue-200/80', avatarBg: 'bg-blue-600' };
+        return {
+          badge: 'bg-blue-50 text-blue-700 border-blue-200/80',
+          avatarBg: 'bg-gradient-to-br from-blue-500 to-blue-700',
+        };
       case 'internship':
-        return { badge: 'bg-purple-50 text-purple-700 border-purple-200/80', avatarBg: 'bg-purple-600' };
+        return {
+          badge: 'bg-purple-50 text-purple-700 border-purple-200/80',
+          avatarBg: 'bg-gradient-to-br from-purple-500 to-indigo-700',
+        };
       case 'scholarship':
-        return { badge: 'bg-amber-50 text-amber-800 border-amber-200/80', avatarBg: 'bg-amber-600' };
+        return {
+          badge: 'bg-amber-50 text-amber-800 border-amber-200/80',
+          avatarBg: 'bg-gradient-to-br from-amber-500 to-orange-600',
+        };
       case 'upskilling':
-        return { badge: 'bg-emerald-50 text-emerald-800 border-emerald-200/80', avatarBg: 'bg-emerald-600' };
+        return {
+          badge: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
+          avatarBg: 'bg-gradient-to-br from-emerald-500 to-teal-700',
+        };
       default:
-        return { badge: 'bg-slate-50 text-slate-700 border-slate-200', avatarBg: 'bg-slate-600' };
+        return {
+          badge: 'bg-slate-50 text-slate-700 border-slate-200',
+          avatarBg: 'bg-gradient-to-br from-slate-600 to-slate-800',
+        };
     }
   };
 
@@ -50,7 +78,30 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     e.stopPropagation();
     navigator.clipboard?.writeText(opportunity.source_url);
     setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    toast.success('Application link copied to clipboard', {
+      description: opportunity.title,
+    });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleBookmarkToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleBookmark(opportunity.id);
+    if (!opportunity.is_bookmarked) {
+      toast.success('Saved to your bookmarks', {
+        description: opportunity.title,
+      });
+    } else {
+      toast.info('Removed from bookmarks');
+    }
+  };
+
+  const handleTrackPipeline = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onTrack(opportunity);
+    toast.success('Added to Application Pipeline', {
+      description: 'You can now monitor milestones in My Applications.',
+    });
   };
 
   // Format deadline and check if closing soon
@@ -60,17 +111,22 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     : false;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 p-5 hover:shadow-md hover:border-blue-400/80 transition-all duration-200 flex flex-col justify-between group">
+    <motion.div
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="bg-white/95 backdrop-blur-sm rounded-3xl border border-slate-200/90 p-5 shadow-xs hover:shadow-xl hover:border-blue-400/80 transition-all duration-200 flex flex-col justify-between group"
+    >
       <div>
-        {/* Header Row: Avatar + Organization + Match Score & Bookmark */}
+        {/* Header Row: Avatar + Organization + Match Score & Actions */}
         <div className="flex items-start justify-between gap-3 mb-3.5">
           <div className="flex items-center space-x-3">
-            <div className={`w-11 h-11 rounded-xl ${theme.avatarBg} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs`}>
+            <div
+              className={`w-11 h-11 rounded-2xl ${theme.avatarBg} text-white font-extrabold text-xs flex items-center justify-center shrink-0 shadow-sm`}
+            >
               {initials || 'OP'}
             </div>
             <div>
               <div className="flex items-center space-x-1.5 text-xs text-slate-500 font-medium">
-                <span className="text-slate-800 font-semibold">{opportunity.organization}</span>
+                <span className="text-slate-900 font-bold">{opportunity.organization}</span>
                 {opportunity.is_verified && (
                   <span title="Verified Institutional Listing">
                     <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
@@ -98,7 +154,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
             </div>
           </div>
 
-          {/* Right Action Icons: Match Score + Bookmark */}
+          {/* Right Action Icons: Match Score + Share + Bookmark */}
           <div className="flex items-center space-x-1">
             {opportunity.matchScore && (
               <span className="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center space-x-1">
@@ -109,18 +165,18 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
 
             <button
               onClick={handleShare}
-              className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+              className="p-1.5 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
               title="Copy Application Link"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
             </button>
 
             <button
-              onClick={() => onToggleBookmark(opportunity.id)}
-              className={`p-1.5 rounded-lg border transition-colors ${
+              onClick={handleBookmarkToggle}
+              className={`p-1.5 rounded-xl border transition-colors ${
                 opportunity.is_bookmarked
                   ? 'bg-blue-50 border-blue-200 text-blue-600'
-                  : 'border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                  : 'border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-100'
               }`}
               title={opportunity.is_bookmarked ? "Remove Bookmark" : "Save Bookmark"}
             >
@@ -142,22 +198,22 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
           {opportunity.description}
         </p>
 
-        {/* Highlights: Salary / Funding & Visa / Benefits */}
+        {/* Highlights: Salary / Funding & Visa / Format */}
         <div className="flex flex-wrap items-center gap-1.5 mb-3.5">
           {opportunity.salary_or_funding && (
-            <span className="inline-flex items-center text-xs font-semibold text-slate-800 bg-slate-100/80 border border-slate-200/60 px-2 py-0.5 rounded-md">
+            <span className="inline-flex items-center text-xs font-semibold text-slate-800 bg-slate-100/90 border border-slate-200/60 px-2 py-0.5 rounded-lg">
               <DollarSign className="w-3 h-3 text-emerald-600 mr-1 shrink-0" />
               <span>{opportunity.salary_or_funding}</span>
             </span>
           )}
 
           {opportunity.visa_sponsorship && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200/70">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200/70">
               Visa Included
             </span>
           )}
 
-          <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 capitalize">
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 capitalize">
             {opportunity.work_format.replace('_', '-')}
           </span>
         </div>
@@ -166,7 +222,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
         {opportunity.skills && (
           <div className="flex flex-wrap gap-1 mb-4">
             {opportunity.skills.split(',').slice(0, 3).map((skill, idx) => (
-              <span key={idx} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+              <span key={idx} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100/80 text-slate-600 border border-slate-200/50">
                 {skill.trim()}
               </span>
             ))}
@@ -190,20 +246,21 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
 
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => onTrack(opportunity)}
-            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+            onClick={handleTrackPipeline}
+            className="px-2.5 py-1 text-xs font-semibold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
           >
             Track Pipeline
           </button>
 
           <button
             onClick={() => onSelect(opportunity)}
-            className="px-3.5 py-1 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors"
+            className="px-3 py-1 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs hover:shadow transition-all inline-flex items-center space-x-1"
           >
-            Details
+            <span>Details</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

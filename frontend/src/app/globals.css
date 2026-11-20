@@ -31,6 +31,11 @@ body {
   background: #94a3b8;
 }
 
+/* Mesh gradient accent glow */
+.bg-radial-glow {
+  background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 75%);
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
