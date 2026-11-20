@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: opphub-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: opportunity_hub
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    container_name: opphub-meilisearch
+    restart: always
+    environment:
+      MEILI_HTTP_ADDR: "0.0.0.0:7700"
+      MEILI_MASTER_KEY: "masterKey123"
+    ports:
+      - "7700:7700"
+    volumes:
+      - meilisearch_data:/meili_data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: opphub-backend
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://postgres:postgres@postgres:5432/opportunity_hub"
+      SECRET_KEY: "dev-secret-key-opphub-cambodia-2026-super-secure"
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data:
+  meilisearch_data:
