@@ -111,8 +111,8 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                 onChange={(e) => setLocationType(e.target.value)}
                 className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500"
               >
-                <option value="local">🇰🇭 Local Cambodia</option>
-                <option value="international">🌏 International</option>
+                <option value="local">Local (Cambodia)</option>
+                <option value="international">International (Overseas)</option>
               </select>
             </div>
           </div>

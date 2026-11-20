@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { ScraperSource, ScraperLog } from '@/types';
 import { fallbackScraperSources, fallbackScraperLogs } from '@/services/api';
 import { AddSourceModal } from './AddSourceModal';
-import { Database, Play, CheckCircle2, RefreshCw, Server, Activity, Plus } from 'lucide-react';
+import { Database, Play, CheckCircle2, RefreshCw, Server, Activity, Plus, MapPin, Globe } from 'lucide-react';
 
 export const AdminScraperView: React.FC = () => {
   const [sources, setSources] = useState<ScraperSource[]>(fallbackScraperSources);
@@ -130,10 +130,15 @@ export const AdminScraperView: React.FC = () => {
                   </td>
                   <td className="py-3 px-4 capitalize font-semibold">{source.category}</td>
                   <td className="py-3 px-4">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center space-x-1 ${
                       source.location_type === 'local' ? 'bg-blue-50 text-blue-700' : 'bg-indigo-50 text-indigo-700'
                     }`}>
-                      {source.location_type === 'local' ? '🇰🇭 Local' : '🌏 Overseas'}
+                      {source.location_type === 'local' ? (
+                        <MapPin className="w-2.5 h-2.5" />
+                      ) : (
+                        <Globe className="w-2.5 h-2.5" />
+                      )}
+                      <span>{source.location_type === 'local' ? 'Local' : 'Overseas'}</span>
                     </span>
                   </td>
                   <td className="py-3 px-4 text-gray-600">{source.schedule_interval}</td>

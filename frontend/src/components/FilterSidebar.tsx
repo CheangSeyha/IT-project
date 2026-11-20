@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { FilterState, WorkFormat } from '@/types';
-import { Filter, RotateCcw, MapPin, Clock, Plane, ShieldCheck, Sparkles } from 'lucide-react';
+import { Filter, RotateCcw, MapPin, Globe, Clock, Plane, ShieldCheck, Sparkles } from 'lucide-react';
 
 interface FilterSidebarProps {
   filters: FilterState;
@@ -49,23 +49,25 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           </button>
           <button
             onClick={() => setFilters(prev => ({ ...prev, locationType: 'local' }))}
-            className={`py-1.5 rounded-lg text-center transition-all ${
+            className={`py-1.5 rounded-lg text-center transition-all inline-flex items-center justify-center space-x-1 ${
               filters.locationType === 'local'
                 ? 'bg-white text-blue-700 shadow-sm'
                 : 'text-gray-500 hover:text-gray-800'
             }`}
           >
-            🇰🇭 Local
+            <MapPin className="w-3 h-3 text-blue-600" />
+            <span>Local</span>
           </button>
           <button
             onClick={() => setFilters(prev => ({ ...prev, locationType: 'international' }))}
-            className={`py-1.5 rounded-lg text-center transition-all ${
+            className={`py-1.5 rounded-lg text-center transition-all inline-flex items-center justify-center space-x-1 ${
               filters.locationType === 'international'
                 ? 'bg-white text-indigo-700 shadow-sm'
                 : 'text-gray-500 hover:text-gray-800'
             }`}
           >
-            🌏 Overseas
+            <Globe className="w-3 h-3 text-indigo-600" />
+            <span>Overseas</span>
           </button>
         </div>
       </div>

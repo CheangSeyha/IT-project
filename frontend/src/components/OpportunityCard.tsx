@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Opportunity } from '@/types';
-import { Calendar, DollarSign, Bookmark, ShieldCheck, Sparkles, Share2, Check } from 'lucide-react';
+import { Calendar, DollarSign, Bookmark, ShieldCheck, Sparkles, Share2, Check, MapPin, Globe } from 'lucide-react';
 
 interface OpportunityCardProps {
   opportunity: Opportunity;
@@ -81,8 +81,18 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${theme.badge}`}>
                   {opportunity.category}
                 </span>
-                <span className="text-[11px] text-slate-500 font-medium">
-                  {opportunity.location_type === 'local' ? `🇰🇭 ${opportunity.province_city || 'Cambodia'}` : `🌏 ${opportunity.country}`}
+                <span className="text-[11px] text-slate-500 font-medium inline-flex items-center space-x-1">
+                  {opportunity.location_type === 'local' ? (
+                    <>
+                      <MapPin className="w-3 h-3 text-blue-500 shrink-0" />
+                      <span>{opportunity.province_city || 'Cambodia'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="w-3 h-3 text-indigo-500 shrink-0" />
+                      <span>{opportunity.country}</span>
+                    </>
+                  )}
                 </span>
               </div>
             </div>

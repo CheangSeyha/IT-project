@@ -6,6 +6,8 @@ import { UserRole, LocationType, NotificationItem, Language } from '@/types';
 import { NotificationDropdown } from './NotificationDropdown';
 import {
   Globe,
+  MapPin,
+  Languages,
   Briefcase,
   GraduationCap,
   LayoutDashboard,
@@ -125,15 +127,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
               <button
                 onClick={() => setLocationScope('local')}
-                className={`px-2 py-1 rounded-md transition-all ${locationScope === 'local' ? 'bg-white text-blue-700 shadow-xs' : 'hover:text-slate-900'}`}
+                className={`px-2 py-1 rounded-md transition-all flex items-center space-x-1 ${locationScope === 'local' ? 'bg-white text-blue-700 shadow-xs' : 'hover:text-slate-900'}`}
               >
-                🇰🇭 Local
+                <MapPin className="w-3 h-3 text-blue-600" />
+                <span>Local</span>
               </button>
               <button
                 onClick={() => setLocationScope('international')}
-                className={`px-2 py-1 rounded-md transition-all ${locationScope === 'international' ? 'bg-white text-indigo-700 shadow-xs' : 'hover:text-slate-900'}`}
+                className={`px-2 py-1 rounded-md transition-all flex items-center space-x-1 ${locationScope === 'international' ? 'bg-white text-indigo-700 shadow-xs' : 'hover:text-slate-900'}`}
               >
-                🌏 Overseas
+                <Globe className="w-3 h-3 text-indigo-600" />
+                <span>Overseas</span>
               </button>
             </div>
 
@@ -171,9 +175,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Language Switcher */}
             <button
               onClick={() => setLanguage(language === 'en' ? 'km' : 'en')}
-              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors"
+              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors inline-flex items-center space-x-1"
             >
-              {language === 'en' ? '🇰🇭 ខ្មែរ' : '🇺🇸 EN'}
+              <Languages className="w-3.5 h-3.5 text-slate-500" />
+              <span>{language === 'en' ? 'ខ្មែរ' : 'EN'}</span>
             </button>
 
             {/* DIRECT LINK TO DEDICATED ADMIN PORTAL */}

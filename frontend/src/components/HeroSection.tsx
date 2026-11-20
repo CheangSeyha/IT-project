@@ -78,9 +78,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 onChange={(e) => setLocationScope(e.target.value as LocationType | 'all')}
                 className="bg-transparent text-xs font-semibold text-gray-700 focus:outline-none cursor-pointer pr-2"
               >
-                <option value="all">{language === 'km' ? 'គ្រប់ទីកន្លែង' : 'Everywhere'}</option>
-                <option value="local">🇰🇭 {language === 'km' ? 'កម្ពុជា' : 'Cambodia Only'}</option>
-                <option value="international">🌏 {language === 'km' ? 'អន្តរជាតិ' : 'International'}</option>
+                <option value="all">{language === 'km' ? 'គ្រប់ទីកន្លែង' : 'All Regions'}</option>
+                <option value="local">{language === 'km' ? 'កម្ពុជា (ក្នុងស្រុក)' : 'Cambodia (Local)'}</option>
+                <option value="international">{language === 'km' ? 'អន្តរជាតិ (ក្រៅប្រទេស)' : 'International (Overseas)'}</option>
               </select>
             </div>
           </div>

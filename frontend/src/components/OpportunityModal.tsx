@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Sparkles,
   MapPin,
+  Globe,
   Share2,
   Check,
 } from 'lucide-react';
@@ -50,8 +51,18 @@ export const OpportunityModal: React.FC<OpportunityModalProps> = ({
               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">
                 {opportunity.category}
               </span>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
-                {opportunity.location_type === 'local' ? '🇰🇭 Cambodia' : `🌏 ${opportunity.country}`}
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 inline-flex items-center space-x-1">
+                {opportunity.location_type === 'local' ? (
+                  <>
+                    <MapPin className="w-3 h-3 text-blue-600" />
+                    <span>{opportunity.province_city || 'Cambodia'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Globe className="w-3 h-3 text-indigo-600" />
+                    <span>{opportunity.country}</span>
+                  </>
+                )}
               </span>
               {opportunity.is_verified && (
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center space-x-1">
