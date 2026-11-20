@@ -1,4 +1,4 @@
-import { Opportunity, ScraperSource, ScraperLog, FilterState } from '@/types';
+import { Opportunity, ScraperSource, ScraperLog, FilterState, NotificationItem, CuratedCollection } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -27,6 +27,7 @@ export const fallbackOpportunities: Opportunity[] = [
     is_verified: true,
     is_bookmarked: false,
     created_at: new Date().toISOString(),
+    matchScore: 96,
   },
   {
     id: 2,
@@ -52,6 +53,7 @@ export const fallbackOpportunities: Opportunity[] = [
     is_verified: true,
     is_bookmarked: false,
     created_at: new Date().toISOString(),
+    matchScore: 84,
   },
   {
     id: 3,
@@ -77,6 +79,7 @@ export const fallbackOpportunities: Opportunity[] = [
     is_verified: true,
     is_bookmarked: false,
     created_at: new Date().toISOString(),
+    matchScore: 92,
   },
   {
     id: 4,
@@ -102,6 +105,7 @@ export const fallbackOpportunities: Opportunity[] = [
     is_verified: true,
     is_bookmarked: false,
     created_at: new Date().toISOString(),
+    matchScore: 68,
   },
   {
     id: 5,
@@ -127,6 +131,7 @@ export const fallbackOpportunities: Opportunity[] = [
     is_verified: true,
     is_bookmarked: false,
     created_at: new Date().toISOString(),
+    matchScore: 95,
   },
   {
     id: 6,
@@ -152,6 +157,7 @@ export const fallbackOpportunities: Opportunity[] = [
     is_verified: true,
     is_bookmarked: false,
     created_at: new Date().toISOString(),
+    matchScore: 89,
   },
   {
     id: 7,
@@ -177,6 +183,7 @@ export const fallbackOpportunities: Opportunity[] = [
     is_verified: true,
     is_bookmarked: false,
     created_at: new Date().toISOString(),
+    matchScore: 91,
   },
   {
     id: 8,
@@ -202,6 +209,7 @@ export const fallbackOpportunities: Opportunity[] = [
     is_verified: true,
     is_bookmarked: false,
     created_at: new Date().toISOString(),
+    matchScore: 86,
   },
   {
     id: 9,
@@ -227,6 +235,7 @@ export const fallbackOpportunities: Opportunity[] = [
     is_verified: true,
     is_bookmarked: false,
     created_at: new Date().toISOString(),
+    matchScore: 94,
   },
   {
     id: 10,
@@ -252,6 +261,163 @@ export const fallbackOpportunities: Opportunity[] = [
     is_verified: true,
     is_bookmarked: false,
     created_at: new Date().toISOString(),
+    matchScore: 88,
+  }
+];
+
+export const fallbackNotifications: NotificationItem[] = [
+  {
+    id: 1,
+    title: "New High-Match Opportunity!",
+    message: "Senior Full-Stack Developer at Wing Bank matches 96% of your profile skills (Python, FastAPI, Next.js).",
+    timestamp: "10 minutes ago",
+    read: false,
+    type: "opportunity",
+    opportunityId: 1,
+  },
+  {
+    id: 2,
+    title: "Application Deadline Closing Soon",
+    message: "Digital Marketing & Content Intern at Siem Reap Tourism closes in 8 days.",
+    timestamp: "2 hours ago",
+    read: false,
+    type: "deadline",
+    opportunityId: 4,
+  },
+  {
+    id: 3,
+    title: "Teacher Collection Shared",
+    message: "Prof. David Kim shared 'Top 2027 International Scholarships for IT Graduates' with your class.",
+    timestamp: "Yesterday",
+    read: true,
+    type: "curation",
+  },
+  {
+    id: 4,
+    title: "Crawler Health Notice",
+    message: "CamHR Spider completed crawl: 24 found, 5 new normalized, 19 duplicates deduplicated.",
+    timestamp: "Yesterday",
+    read: true,
+    type: "system",
+  }
+];
+
+export const fallbackCuratedCollections: CuratedCollection[] = [
+  {
+    id: 1,
+    title: "Top 2027 International Scholarships for IT Graduates",
+    author: "Prof. David Kim (Faculty of CS & IT)",
+    targetGroup: "Year 4 Undergraduate Students",
+    description: "Curated list of fully funded Master's fellowships (Chevening, MEXT, Australia Awards) with visa sponsorship and English proficiency criteria.",
+    opportunityIds: [6, 7, 8],
+    createdAt: "Nov 15, 2026",
+    viewsCount: 142,
+  },
+  {
+    id: 2,
+    title: "High-Priority Software & AI Summer Internships (Cambodia)",
+    author: "Career Development Office",
+    targetGroup: "Year 2 & 3 Computer Science Cohort",
+    description: "Verified tech internships in Phnom Penh with established engineering mentors and competitive stipends.",
+    opportunityIds: [1, 3, 5],
+    createdAt: "Nov 18, 2026",
+    viewsCount: 230,
+  },
+];
+
+export const fallbackScraperSources: ScraperSource[] = [
+  {
+    id: 1,
+    name: "CamHR Career Portal",
+    target_url: "https://www.camhr.com/jobs",
+    category: "job",
+    location_type: "local",
+    schedule_interval: "Every 6 hours",
+    last_run_at: "2 hours ago",
+    status: "active",
+    items_scraped_total: 142,
+    successRate: 98.4,
+  },
+  {
+    id: 2,
+    name: "BongThom Careers & Classifieds",
+    target_url: "https://www.bongthom.com/jobs",
+    category: "job",
+    location_type: "local",
+    schedule_interval: "Every 6 hours",
+    last_run_at: "3 hours ago",
+    status: "active",
+    items_scraped_total: 98,
+    successRate: 99.1,
+  },
+  {
+    id: 3,
+    name: "CADT Announcements & Bootcamps",
+    target_url: "https://cadt.edu.kh/announcements",
+    category: "upskilling",
+    location_type: "local",
+    schedule_interval: "Daily",
+    last_run_at: "14 hours ago",
+    status: "active",
+    items_scraped_total: 35,
+    successRate: 100.0,
+  },
+  {
+    id: 4,
+    name: "UK Chevening Cambodia Board",
+    target_url: "https://www.chevening.org/scholarship/cambodia/",
+    category: "scholarship",
+    location_type: "international",
+    schedule_interval: "Weekly",
+    last_run_at: "2 days ago",
+    status: "active",
+    items_scraped_total: 12,
+    successRate: 97.2,
+  },
+  {
+    id: 5,
+    name: "Embassy of Japan MEXT Gateway",
+    target_url: "https://www.kh.emb-japan.go.jp/itpr_en/mext_postgrad.html",
+    category: "scholarship",
+    location_type: "international",
+    schedule_interval: "Weekly",
+    last_run_at: "3 days ago",
+    status: "active",
+    items_scraped_total: 18,
+    successRate: 96.5,
+  }
+];
+
+export const fallbackScraperLogs: ScraperLog[] = [
+  {
+    id: 1,
+    source_name: "CamHR Career Portal",
+    started_at: "Today, 14:10",
+    finished_at: "Today, 14:15",
+    status: "SUCCESS",
+    items_found: 24,
+    new_items: 5,
+    duplicates: 19
+  },
+  {
+    id: 2,
+    source_name: "BongThom Classifieds",
+    started_at: "Today, 13:00",
+    finished_at: "Today, 13:04",
+    status: "SUCCESS",
+    items_found: 18,
+    new_items: 4,
+    duplicates: 14
+  },
+  {
+    id: 3,
+    source_name: "CADT Tech Notices",
+    started_at: "Yesterday, 20:00",
+    finished_at: "Yesterday, 20:02",
+    status: "SUCCESS",
+    items_found: 6,
+    new_items: 1,
+    duplicates: 5
   }
 ];
 
@@ -306,6 +472,12 @@ export async function fetchOpportunities(filters?: FilterState): Promise<{ items
     if (filters.country) {
       filtered = filtered.filter(item => item.country.toLowerCase().includes(filters.country.toLowerCase()));
     }
+    if (filters.fieldOfStudy) {
+      filtered = filtered.filter(item => item.field_of_study?.toLowerCase().includes(filters.fieldOfStudy.toLowerCase()));
+    }
+    if (filters.educationLevel) {
+      filtered = filtered.filter(item => item.education_level?.toLowerCase().includes(filters.educationLevel.toLowerCase()));
+    }
     if (filters.workFormat !== 'all') {
       filtered = filtered.filter(item => item.work_format === filters.workFormat);
     }
@@ -314,6 +486,9 @@ export async function fetchOpportunities(filters?: FilterState): Promise<{ items
     }
     if (filters.verifiedOnly) {
       filtered = filtered.filter(item => item.is_verified);
+    }
+    if (filters.highMatchOnly) {
+      filtered = filtered.filter(item => (item.matchScore || 0) >= 90);
     }
     if (filters.closingSoonOnly) {
       const now = Date.now();
@@ -328,94 +503,3 @@ export async function fetchOpportunities(filters?: FilterState): Promise<{ items
 
   return { items: filtered, total: filtered.length };
 }
-
-export const fallbackScraperSources: ScraperSource[] = [
-  {
-    id: 1,
-    name: "CamHR Career Portal",
-    target_url: "https://www.camhr.com/jobs",
-    category: "job",
-    location_type: "local",
-    schedule_interval: "Every 6 hours",
-    last_run_at: "2 hours ago",
-    status: "active",
-    items_scraped_total: 142
-  },
-  {
-    id: 2,
-    name: "BongThom Careers & Classifieds",
-    target_url: "https://www.bongthom.com/jobs",
-    category: "job",
-    location_type: "local",
-    schedule_interval: "Every 6 hours",
-    last_run_at: "3 hours ago",
-    status: "active",
-    items_scraped_total: 98
-  },
-  {
-    id: 3,
-    name: "CADT Announcements & Bootcamps",
-    target_url: "https://cadt.edu.kh/announcements",
-    category: "upskilling",
-    location_type: "local",
-    schedule_interval: "Daily",
-    last_run_at: "14 hours ago",
-    status: "active",
-    items_scraped_total: 35
-  },
-  {
-    id: 4,
-    name: "UK Chevening Cambodia Board",
-    target_url: "https://www.chevening.org/scholarship/cambodia/",
-    category: "scholarship",
-    location_type: "international",
-    schedule_interval: "Weekly",
-    last_run_at: "2 days ago",
-    status: "active",
-    items_scraped_total: 12
-  },
-  {
-    id: 5,
-    name: "Embassy of Japan MEXT Gateway",
-    target_url: "https://www.kh.emb-japan.go.jp/itpr_en/mext_postgrad.html",
-    category: "scholarship",
-    location_type: "international",
-    schedule_interval: "Weekly",
-    last_run_at: "3 days ago",
-    status: "active",
-    items_scraped_total: 18
-  }
-];
-
-export const fallbackScraperLogs: ScraperLog[] = [
-  {
-    id: 1,
-    source_name: "CamHR Career Portal",
-    started_at: "Today, 14:10",
-    finished_at: "Today, 14:15",
-    status: "SUCCESS",
-    items_found: 24,
-    new_items: 5,
-    duplicates: 19
-  },
-  {
-    id: 2,
-    source_name: "BongThom Classifieds",
-    started_at: "Today, 13:00",
-    finished_at: "Today, 13:04",
-    status: "SUCCESS",
-    items_found: 18,
-    new_items: 4,
-    duplicates: 14
-  },
-  {
-    id: 3,
-    source_name: "CADT Tech Notices",
-    started_at: "Yesterday, 20:00",
-    finished_at: "Yesterday, 20:02",
-    status: "SUCCESS",
-    items_found: 6,
-    new_items: 1,
-    duplicates: 5
-  }
-];

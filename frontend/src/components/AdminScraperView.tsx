@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ScraperSource, ScraperLog } from '@/types';
 import { fallbackScraperSources, fallbackScraperLogs } from '@/services/api';
-import { Database, Play, CheckCircle2, RefreshCw, Server, Activity } from 'lucide-react';
+import { AddSourceModal } from './AddSourceModal';
+import { Database, Play, CheckCircle2, RefreshCw, Server, Activity, Plus } from 'lucide-react';
 
 export const AdminScraperView: React.FC = () => {
-  const [sources, setSources] = useState(fallbackScraperSources);
-  const [logs, setLogs] = useState(fallbackScraperLogs);
+  const [sources, setSources] = useState<ScraperSource[]>(fallbackScraperSources);
+  const [logs, setLogs] = useState<ScraperLog[]>(fallbackScraperLogs);
   const [runningId, setRunningId] = useState<number | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const handleTriggerScraper = (id: number) => {
     setRunningId(id);
@@ -32,6 +35,10 @@ export const AdminScraperView: React.FC = () => {
     }, 1200);
   };
 
+  const handleAddSource = (newSource: ScraperSource) => {
+    setSources(prev => [...prev, newSource]);
+  };
+
   const totalScraped = sources.reduce((acc, s) => acc + s.items_scraped_total, 0);
 
   return (
@@ -48,9 +55,19 @@ export const AdminScraperView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2 text-xs font-semibold px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-200">
-          <Activity className="w-4 h-4 text-emerald-600 animate-pulse" />
-          <span>All 5 Spiders Operating Normally</span>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 text-xs font-semibold px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-200">
+            <Activity className="w-4 h-4 text-emerald-600 animate-pulse" />
+            <span>Spiders Operating Normally</span>
+          </div>
+
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Target URL</span>
+          </button>
         </div>
       </div>
 
@@ -71,7 +88,7 @@ export const AdminScraperView: React.FC = () => {
         <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm">
           <span className="text-xs font-medium text-gray-500 block">Deduplication Rate</span>
           <span className="text-2xl font-extrabold text-indigo-600 mt-1 block">78.4%</span>
-          <span className="text-[11px] text-gray-400 font-medium">Filtered SimHash dups</span>
+          <span className="text-[11px] text-gray-400 font-medium">SimHash exact & fuzzy</span>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm">
@@ -160,14 +177,20 @@ export const AdminScraperView: React.FC = () => {
                 <span className="text-gray-400">• {log.started_at}</span>
               </div>
               <div className="flex items-center space-x-3 text-gray-600 mt-1 sm:mt-0">
-                <span>Items Found: <strong className="text-gray-800">{log.items_found}</strong></span>
-                <span>New Normalized: <strong className="text-emerald-700">{log.new_items}</strong></span>
+                <span>Found: <strong className="text-gray-800">{log.items_found}</strong></span>
+                <span>New: <strong className="text-emerald-700">{log.new_items}</strong></span>
                 <span>Duplicates Dropped: <strong className="text-amber-700">{log.duplicates}</strong></span>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      <AddSourceModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAddSource={handleAddSource}
+      />
     </div>
   );
 };

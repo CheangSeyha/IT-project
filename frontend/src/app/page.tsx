@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Opportunity, ApplicationStatus, UserRole, FilterState } from '@/types';
-import { fetchOpportunities, fallbackOpportunities } from '@/services/api';
+import { Opportunity, ApplicationStatus, UserRole, FilterState, NotificationItem, Language } from '@/types';
+import { fetchOpportunities, fallbackOpportunities, fallbackNotifications } from '@/services/api';
 import { Navbar } from '@/components/Navbar';
 import { HeroSection } from '@/components/HeroSection';
 import { FilterSidebar } from '@/components/FilterSidebar';
@@ -11,12 +11,24 @@ import { OpportunityModal } from '@/components/OpportunityModal';
 import { ApplicationTrackerView } from '@/components/ApplicationTrackerView';
 import { TeacherCurationView } from '@/components/TeacherCurationView';
 import { AdminScraperView } from '@/components/AdminScraperView';
+import { StaffAnalyticsView } from '@/components/StaffAnalyticsView';
+import { AlertSettingsModal } from '@/components/AlertSettingsModal';
+import { StaffPostModal } from '@/components/StaffPostModal';
 import { Compass, RefreshCw } from 'lucide-react';
 
 export default function HomePage() {
-  const [currentView, setCurrentView] = useState<'opportunities' | 'tracker' | 'curation' | 'admin'>('opportunities');
+  const [currentView, setCurrentView] = useState<'opportunities' | 'tracker' | 'curation' | 'admin' | 'analytics'>('opportunities');
   const [activeRole, setActiveRole] = useState<UserRole>('student');
+  const [language, setLanguage] = useState<Language>('en');
   const [loading, setLoading] = useState(false);
+
+  // Notifications state
+  const [notifications, setNotifications] = useState<NotificationItem[]>(fallbackNotifications);
+
+  // Modals state
+  const [showAlertSettings, setShowAlertSettings] = useState(false);
+  const [showStaffPost, setShowStaffPost] = useState(false);
+  const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
 
   // Filters state
   const [filters, setFilters] = useState<FilterState>({
@@ -25,15 +37,17 @@ export default function HomePage() {
     locationType: 'all',
     provinceCity: '',
     country: '',
+    fieldOfStudy: '',
+    educationLevel: '',
     workFormat: 'all',
     visaSponsorshipOnly: false,
     closingSoonOnly: false,
     verifiedOnly: false,
+    highMatchOnly: false,
   });
 
-  // Data & Modal state
+  // Opportunities state
   const [opportunities, setOpportunities] = useState<Opportunity[]>(fallbackOpportunities);
-  const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
 
   // Application tracker map (opportunityId -> ApplicationStatus)
   const [trackers, setTrackers] = useState<Record<number, ApplicationStatus>>({
@@ -78,6 +92,28 @@ export default function HomePage() {
     }));
   };
 
+  // Add new opportunity from Staff Post modal
+  const handleAddOpportunity = (newOpp: Opportunity) => {
+    setOpportunities(prev => [newOpp, ...prev]);
+    setNotifications(prev => [
+      {
+        id: Date.now(),
+        title: "New Verified Posting Added",
+        message: `${newOpp.title} at ${newOpp.organization} is now live on the platform.`,
+        timestamp: "Just now",
+        read: false,
+        type: "opportunity",
+        opportunityId: newOpp.id,
+      },
+      ...prev,
+    ]);
+  };
+
+  // Mark all notifications read
+  const handleMarkAllNotificationsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
   const handleResetFilters = () => {
     setFilters({
       searchQuery: '',
@@ -85,10 +121,13 @@ export default function HomePage() {
       locationType: 'all',
       provinceCity: '',
       country: '',
+      fieldOfStudy: '',
+      educationLevel: '',
       workFormat: 'all',
       visaSponsorshipOnly: false,
       closingSoonOnly: false,
       verifiedOnly: false,
+      highMatchOnly: false,
     });
   };
 
@@ -107,6 +146,12 @@ export default function HomePage() {
         bookmarkCount={bookmarkCount}
         locationScope={filters.locationType}
         setLocationScope={(scope) => setFilters(prev => ({ ...prev, locationType: scope }))}
+        notifications={notifications}
+        onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
+        onOpenAlertSettings={() => setShowAlertSettings(true)}
+        onOpenStaffPost={() => setShowStaffPost(true)}
+        language={language}
+        setLanguage={setLanguage}
       />
 
       {/* Main View Switcher */}
@@ -124,6 +169,8 @@ export default function HomePage() {
         />
       ) : currentView === 'admin' ? (
         <AdminScraperView />
+      ) : currentView === 'analytics' ? (
+        <StaffAnalyticsView />
       ) : (
         /* Default Opportunities Catalog View */
         <main className="flex-1">
@@ -135,6 +182,7 @@ export default function HomePage() {
             locationScope={filters.locationType}
             setLocationScope={(scope) => setFilters(prev => ({ ...prev, locationType: scope }))}
             totalCount={opportunities.length}
+            language={language}
           />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -151,7 +199,11 @@ export default function HomePage() {
                 {/* Result Status Bar */}
                 <div className="flex items-center justify-between pb-2 border-b border-gray-200">
                   <div className="flex items-center space-x-2 text-xs text-gray-600 font-semibold">
-                    <span>Showing <strong className="text-gray-900">{opportunities.length}</strong> listings</span>
+                    <span>
+                      {language === 'km' ? 'បង្ហាញ' : 'Showing'}{' '}
+                      <strong className="text-gray-900">{opportunities.length}</strong>{' '}
+                      {language === 'km' ? 'ឱកាស' : 'listings'}
+                    </span>
                     {filters.locationType !== 'all' && (
                       <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[11px]">
                         {filters.locationType === 'local' ? 'Cambodia Only' : 'Overseas Only'}
@@ -160,6 +212,11 @@ export default function HomePage() {
                     {filters.category !== 'all' && (
                       <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px] capitalize">
                         {filters.category}
+                      </span>
+                    )}
+                    {filters.highMatchOnly && (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px]">
+                        90%+ Match
                       </span>
                     )}
                   </div>
@@ -217,6 +274,19 @@ export default function HomePage() {
         onToggleBookmark={handleToggleBookmark}
         onUpdateStatus={handleUpdateStatus}
         currentStatus={selectedOpportunity ? trackers[selectedOpportunity.id] : 'saved'}
+      />
+
+      {/* Alert Settings Modal */}
+      <AlertSettingsModal
+        isOpen={showAlertSettings}
+        onClose={() => setShowAlertSettings(false)}
+      />
+
+      {/* Staff Post Opportunity Modal */}
+      <StaffPostModal
+        isOpen={showStaffPost}
+        onClose={() => setShowStaffPost(false)}
+        onAddOpportunity={handleAddOpportunity}
       />
 
       {/* Footer */}

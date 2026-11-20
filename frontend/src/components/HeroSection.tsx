@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { OpportunityCategory, LocationType } from '@/types';
-import { Search, MapPin, Briefcase, GraduationCap, Award, Compass, Sparkles } from 'lucide-react';
+import { OpportunityCategory, LocationType, Language } from '@/types';
+import { Search, MapPin, Briefcase, GraduationCap, Award, Compass, Sparkles, Tag } from 'lucide-react';
 
 interface HeroSectionProps {
   searchQuery: string;
@@ -12,6 +12,7 @@ interface HeroSectionProps {
   locationScope: LocationType | 'all';
   setLocationScope: (scope: LocationType | 'all') => void;
   totalCount: number;
+  language: Language;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
@@ -22,22 +23,35 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   locationScope,
   setLocationScope,
   totalCount,
+  language,
 }) => {
+  const popularKeywords = ['Python', 'FastAPI', 'Flutter', 'IELTS', 'Full Scholarship', 'Phnom Penh', 'CADT'];
+
   return (
     <div className="bg-gradient-to-b from-blue-50/70 via-indigo-50/30 to-white py-10 px-4 sm:px-6 lg:px-8 border-b border-gray-100">
       <div className="max-w-5xl mx-auto text-center">
         {/* Pill Badge */}
         <div className="inline-flex items-center space-x-2 bg-blue-100/80 border border-blue-200/60 px-3.5 py-1 rounded-full text-xs font-semibold text-blue-800 mb-4 shadow-sm">
           <Sparkles className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
-          <span>Automated Opportunity Aggregator & Faceted Retrieval</span>
+          <span>
+            {language === 'km'
+              ? 'វេទិកាប្រមូលផ្តុំទិន្នន័យស្វ័យប្រវត្ត & ស្វែងរកតាមលក្ខខណ្ឌច្រើន'
+              : 'Automated Opportunity Aggregator & Faceted Retrieval Engine'}
+          </span>
         </div>
 
         {/* Main Heading */}
         <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
-          Find Your Next <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Career, Internship or Scholarship</span>
+          {language === 'km' ? (
+            <>ស្វែងរកឱកាស <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">ការងារ កម្មសិក្សា និងអាហារូបករណ៍</span></>
+          ) : (
+            <>Find Your Next <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Career, Internship or Scholarship</span></>
+          )}
         </h1>
         <p className="mt-3 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
-          Normalized from leading Cambodian career portals, university boards, and global institutions. Zero duplicates, structured filters, and personalized tracking.
+          {language === 'km'
+            ? 'ប្រមូលទិន្នន័យដោយផ្ទាល់ពីគេហទំព័រការងារក្នុងស្រុក និងស្ថាប័នអន្តរជាតិ។ គ្មានទិន្នន័យស្ទួន និងមានប្រព័ន្ធតាមដានផ្ទាល់ខ្លួន។'
+            : 'Aggregated, normalized, and deduplicated from leading Cambodian portals and global embassies. Zero duplicate listings and tailored tracking.'}
         </p>
 
         {/* Search Bar Input */}
@@ -47,7 +61,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               <Search className="w-5 h-5 text-gray-400 mr-2.5 shrink-0" />
               <input
                 type="text"
-                placeholder="Search job title, skills (Python, React), organization, or keyword..."
+                placeholder={language === 'km' ? "ស្វែងរកចំណងជើង ជំនាញ (Python, React) ឬស្ថាប័ន..." : "Search job title, skills (Python, React), organization, or keyword..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
@@ -64,15 +78,30 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 onChange={(e) => setLocationScope(e.target.value as LocationType | 'all')}
                 className="bg-transparent text-xs font-semibold text-gray-700 focus:outline-none cursor-pointer pr-2"
               >
-                <option value="all">Everywhere</option>
-                <option value="local">🇰🇭 Cambodia Only</option>
-                <option value="international">🌏 International Only</option>
+                <option value="all">{language === 'km' ? 'គ្រប់ទីកន្លែង' : 'Everywhere'}</option>
+                <option value="local">🇰🇭 {language === 'km' ? 'កម្ពុជា' : 'Cambodia Only'}</option>
+                <option value="international">🌏 {language === 'km' ? 'អន្តរជាតិ' : 'International'}</option>
               </select>
             </div>
           </div>
+
+          {/* Popular Tag Pills */}
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 text-xs text-gray-500">
+            <Tag className="w-3.5 h-3.5 text-gray-400 mr-1" />
+            <span className="font-medium mr-1">{language === 'km' ? 'ពាក្យស្វែងរកញឹកញាប់:' : 'Popular:'}</span>
+            {popularKeywords.map((kw, idx) => (
+              <button
+                key={idx}
+                onClick={() => setSearchQuery(kw)}
+                className="px-2.5 py-0.5 rounded-full bg-white/80 border border-gray-200/80 text-gray-700 hover:text-blue-600 hover:border-blue-300 transition-colors"
+              >
+                #{kw}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Category Pills */}
+        {/* Category Filter Pills */}
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
           <button
             onClick={() => setSelectedCategory('all')}
@@ -83,7 +112,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             }`}
           >
             <Compass className="w-3.5 h-3.5" />
-            <span>All Categories ({totalCount})</span>
+            <span>{language === 'km' ? 'ទាំងអស់' : 'All Categories'} ({totalCount})</span>
           </button>
 
           <button
@@ -95,7 +124,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             }`}
           >
             <Briefcase className="w-3.5 h-3.5 text-blue-500" />
-            <span>Jobs</span>
+            <span>{language === 'km' ? 'ការងារ' : 'Jobs'}</span>
           </button>
 
           <button
@@ -107,7 +136,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             }`}
           >
             <GraduationCap className="w-3.5 h-3.5 text-purple-500" />
-            <span>Internships</span>
+            <span>{language === 'km' ? 'កម្មសិក្សា' : 'Internships'}</span>
           </button>
 
           <button
@@ -119,7 +148,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             }`}
           >
             <Award className="w-3.5 h-3.5 text-amber-500" />
-            <span>Scholarships</span>
+            <span>{language === 'km' ? 'អាហារូបករណ៍' : 'Scholarships'}</span>
           </button>
 
           <button
@@ -131,7 +160,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             }`}
           >
             <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Upskilling & Bootcamps</span>
+            <span>{language === 'km' ? 'វគ្គបណ្តុះបណ្តាល' : 'Upskilling & Bootcamps'}</span>
           </button>
         </div>
       </div>
