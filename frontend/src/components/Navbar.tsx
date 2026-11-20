@@ -1,24 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { UserRole, LocationType, NotificationItem, Language } from '@/types';
 import { NotificationDropdown } from './NotificationDropdown';
 import {
   Globe,
-  User,
   Briefcase,
   GraduationCap,
   LayoutDashboard,
-  Database,
   Bell,
-  Plus,
-  BarChart3,
   SlidersHorizontal,
+  ArrowRight,
 } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'opportunities' | 'tracker' | 'curation' | 'admin' | 'analytics';
-  setCurrentView: (view: 'opportunities' | 'tracker' | 'curation' | 'admin' | 'analytics') => void;
+  currentView: 'opportunities' | 'tracker' | 'curation';
+  setCurrentView: (view: 'opportunities' | 'tracker' | 'curation') => void;
   activeRole: UserRole;
   setActiveRole: (role: UserRole) => void;
   bookmarkCount: number;
@@ -27,7 +25,6 @@ interface NavbarProps {
   notifications: NotificationItem[];
   onMarkAllNotificationsRead: () => void;
   onOpenAlertSettings: () => void;
-  onOpenStaffPost: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
 }
@@ -35,15 +32,12 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   currentView,
   setCurrentView,
-  activeRole,
-  setActiveRole,
   bookmarkCount,
   locationScope,
   setLocationScope,
   notifications,
   onMarkAllNotificationsRead,
   onOpenAlertSettings,
-  onOpenStaffPost,
   language,
   setLanguage,
 }) => {
@@ -51,7 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-200">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
@@ -59,151 +53,100 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center space-x-3 cursor-pointer shrink-0"
             onClick={() => setCurrentView('opportunities')}
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20">
               <Globe className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
-                <span className="font-bold text-lg text-gray-900 tracking-tight">OpportunityHub</span>
-                <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Cambodia</span>
+                <span className="font-bold text-base text-slate-900 tracking-tight">OpportunityHub</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                  KH
+                </span>
               </div>
-              <p className="text-[11px] text-gray-500 hidden sm:block">
-                {language === 'km' ? 'ការងារ អាហារូបករណ៍ កម្មសិក្សា និងការអភិវឌ្ឍជំនាញ' : 'Jobs, Scholarships, Internships & Upskilling'}
+              <p className="text-[11px] text-slate-500 hidden sm:block">
+                {language === 'km' ? 'ការងារ កម្មសិក្សា & អាហារូបករណ៍' : 'Cambodia & Overseas Opportunities'}
               </p>
             </div>
           </div>
 
-          {/* Center: Scope Toggle */}
-          <div className="hidden lg:flex items-center bg-gray-100 p-1 rounded-xl">
+          {/* Navigation Tabs */}
+          <nav className="hidden md:flex items-center space-x-1 bg-slate-100/80 p-1 rounded-xl text-xs font-semibold">
             <button
-              onClick={() => setLocationScope('all')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                locationScope === 'all'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+              onClick={() => setCurrentView('opportunities')}
+              className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
+                currentView === 'opportunities'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {language === 'km' ? 'ទាំងអស់' : 'All Opportunities'}
+              <Briefcase className="w-3.5 h-3.5 text-blue-600" />
+              <span>{language === 'km' ? 'ស្វែងរកឱកាស' : 'Explore Catalog'}</span>
             </button>
-            <button
-              onClick={() => setLocationScope('local')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1 ${
-                locationScope === 'local'
-                  ? 'bg-white text-blue-700 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <span>🇰🇭 {language === 'km' ? 'ក្នុងស្រុក (កម្ពុជា)' : 'Local (Cambodia)'}</span>
-            </button>
-            <button
-              onClick={() => setLocationScope('international')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1 ${
-                locationScope === 'international'
-                  ? 'bg-white text-indigo-700 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <span>🌏 {language === 'km' ? 'អន្តរជាតិ' : 'International'}</span>
-            </button>
-          </div>
 
-          {/* Right Navigation & Tools */}
+            <button
+              onClick={() => setCurrentView('tracker')}
+              className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 relative ${
+                currentView === 'tracker'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 text-purple-600" />
+              <span>{language === 'km' ? 'កម្មវិធីតាមដាន' : 'My Applications'}</span>
+              {bookmarkCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-bold ml-1">
+                  {bookmarkCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setCurrentView('curation')}
+              className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
+                currentView === 'curation'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{language === 'km' ? 'ការណែនាំពីសាស្ត្រាចារ្យ' : 'Curated Lists'}</span>
+            </button>
+          </nav>
+
+          {/* Right Tools & Admin Link */}
           <div className="flex items-center space-x-2 sm:space-x-3">
-            {/* View Links */}
-            <nav className="flex items-center space-x-1">
+            {/* Quick Scope Filter Pill */}
+            <div className="hidden xl:flex items-center bg-slate-100 p-0.5 rounded-lg text-[11px] font-semibold text-slate-600">
               <button
-                onClick={() => setCurrentView('opportunities')}
-                className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg flex items-center space-x-1 transition-colors ${
-                  currentView === 'opportunities'
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
+                onClick={() => setLocationScope('all')}
+                className={`px-2 py-1 rounded-md transition-all ${locationScope === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'hover:text-slate-900'}`}
               >
-                <Briefcase className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Catalog</span>
+                All
               </button>
-
               <button
-                onClick={() => setCurrentView('tracker')}
-                className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg flex items-center space-x-1 transition-colors relative ${
-                  currentView === 'tracker'
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
+                onClick={() => setLocationScope('local')}
+                className={`px-2 py-1 rounded-md transition-all ${locationScope === 'local' ? 'bg-white text-blue-700 shadow-xs' : 'hover:text-slate-900'}`}
               >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Pipeline</span>
-                {bookmarkCount > 0 && (
-                  <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-bold">
-                    {bookmarkCount}
-                  </span>
-                )}
+                🇰🇭 Local
               </button>
-
               <button
-                onClick={() => setCurrentView('curation')}
-                className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg flex items-center space-x-1 transition-colors ${
-                  currentView === 'curation'
-                    ? 'bg-purple-50 text-purple-700'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
+                onClick={() => setLocationScope('international')}
+                className={`px-2 py-1 rounded-md transition-all ${locationScope === 'international' ? 'bg-white text-indigo-700 shadow-xs' : 'hover:text-slate-900'}`}
               >
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Curated</span>
+                🌏 Overseas
               </button>
-
-              {/* Staff / Admin Analytics Tab */}
-              {(activeRole === 'staff' || activeRole === 'admin') && (
-                <button
-                  onClick={() => setCurrentView('analytics')}
-                  className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg flex items-center space-x-1 transition-colors ${
-                    currentView === 'analytics'
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <BarChart3 className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Analytics</span>
-                </button>
-              )}
-
-              {/* Admin Scrapers Tab */}
-              {activeRole === 'admin' && (
-                <button
-                  onClick={() => setCurrentView('admin')}
-                  className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg flex items-center space-x-1 transition-colors ${
-                    currentView === 'admin'
-                      ? 'bg-purple-50 text-purple-700'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <Database className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Spiders</span>
-                </button>
-              )}
-            </nav>
-
-            {/* Career Officer "Post Opportunity" Button */}
-            {(activeRole === 'staff' || activeRole === 'admin') && (
-              <button
-                onClick={onOpenStaffPost}
-                className="hidden md:flex items-center space-x-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Post Verified</span>
-              </button>
-            )}
+            </div>
 
             {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors relative"
-                title="Notifications & Match Alerts"
+                className="p-2 text-slate-500 hover:text-slate-800 rounded-xl hover:bg-slate-100 transition-colors relative"
+                title="Notifications"
               >
                 <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-600 rounded-full ring-2 ring-white" />
                 )}
               </button>
 
@@ -216,43 +159,31 @@ export const Navbar: React.FC<NavbarProps> = ({
               />
             </div>
 
-            {/* Alert Preferences Icon for Students */}
-            {activeRole === 'student' && (
-              <button
-                onClick={onOpenAlertSettings}
-                className="p-2 text-gray-500 hover:text-blue-600 rounded-lg hover:bg-gray-100 transition-colors"
-                title="Custom Match Alert Preferences"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-              </button>
-            )}
+            {/* Alert Preferences Trigger */}
+            <button
+              onClick={onOpenAlertSettings}
+              className="p-2 text-slate-500 hover:text-blue-600 rounded-xl hover:bg-slate-100 transition-colors hidden sm:block"
+              title="Alert Preferences"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+            </button>
 
-            {/* Bilingual Switcher (EN / ភាសាខ្មែរ) */}
+            {/* Language Switcher */}
             <button
               onClick={() => setLanguage(language === 'en' ? 'km' : 'en')}
-              className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-bold transition-colors"
-              title="Switch Language / ប្តូរភាសា"
+              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors"
             >
               {language === 'en' ? '🇰🇭 ខ្មែរ' : '🇺🇸 EN'}
             </button>
 
-            {/* Demo Role Switcher */}
-            <div className="flex items-center pl-1 sm:pl-2 border-l border-gray-200">
-              <div className="flex items-center space-x-1 bg-gray-50 border border-gray-200 px-2 py-1 rounded-lg text-xs">
-                <User className="w-3.5 h-3.5 text-gray-500" />
-                <select
-                  value={activeRole}
-                  onChange={(e) => setActiveRole(e.target.value as UserRole)}
-                  className="bg-transparent font-bold text-gray-800 focus:outline-none cursor-pointer max-w-[100px] sm:max-w-none truncate"
-                >
-                  <option value="student">Student (Sokha Chan)</option>
-                  <option value="teacher">Teacher (Prof. Kim)</option>
-                  <option value="staff">Staff (Career Officer)</option>
-                  <option value="admin">Admin (System Admin)</option>
-                  <option value="public">Public (Visitor)</option>
-                </select>
-              </div>
-            </div>
+            {/* DIRECT LINK TO DEDICATED ADMIN PORTAL */}
+            <Link
+              href="/admin"
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors"
+            >
+              <span>Admin Portal</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+            </Link>
           </div>
         </div>
       </div>

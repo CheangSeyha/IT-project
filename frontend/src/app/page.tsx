@@ -10,14 +10,11 @@ import { OpportunityCard } from '@/components/OpportunityCard';
 import { OpportunityModal } from '@/components/OpportunityModal';
 import { ApplicationTrackerView } from '@/components/ApplicationTrackerView';
 import { TeacherCurationView } from '@/components/TeacherCurationView';
-import { AdminScraperView } from '@/components/AdminScraperView';
-import { StaffAnalyticsView } from '@/components/StaffAnalyticsView';
 import { AlertSettingsModal } from '@/components/AlertSettingsModal';
-import { StaffPostModal } from '@/components/StaffPostModal';
 import { Compass, RefreshCw } from 'lucide-react';
 
 export default function HomePage() {
-  const [currentView, setCurrentView] = useState<'opportunities' | 'tracker' | 'curation' | 'admin' | 'analytics'>('opportunities');
+  const [currentView, setCurrentView] = useState<'opportunities' | 'tracker' | 'curation'>('opportunities');
   const [activeRole, setActiveRole] = useState<UserRole>('student');
   const [language, setLanguage] = useState<Language>('en');
   const [loading, setLoading] = useState(false);
@@ -27,7 +24,6 @@ export default function HomePage() {
 
   // Modals state
   const [showAlertSettings, setShowAlertSettings] = useState(false);
-  const [showStaffPost, setShowStaffPost] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
 
   // Filters state
@@ -92,23 +88,6 @@ export default function HomePage() {
     }));
   };
 
-  // Add new opportunity from Staff Post modal
-  const handleAddOpportunity = (newOpp: Opportunity) => {
-    setOpportunities(prev => [newOpp, ...prev]);
-    setNotifications(prev => [
-      {
-        id: Date.now(),
-        title: "New Verified Posting Added",
-        message: `${newOpp.title} at ${newOpp.organization} is now live on the platform.`,
-        timestamp: "Just now",
-        read: false,
-        type: "opportunity",
-        opportunityId: newOpp.id,
-      },
-      ...prev,
-    ]);
-  };
-
   // Mark all notifications read
   const handleMarkAllNotificationsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
@@ -136,7 +115,7 @@ export default function HomePage() {
   }, [opportunities]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col text-gray-900 font-sans selection:bg-blue-100 selection:text-blue-900">
+    <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
       {/* Top Navbar */}
       <Navbar
         currentView={currentView}
@@ -149,7 +128,6 @@ export default function HomePage() {
         notifications={notifications}
         onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
         onOpenAlertSettings={() => setShowAlertSettings(true)}
-        onOpenStaffPost={() => setShowStaffPost(true)}
         language={language}
         setLanguage={setLanguage}
       />
@@ -167,12 +145,8 @@ export default function HomePage() {
           opportunities={opportunities}
           onSelect={setSelectedOpportunity}
         />
-      ) : currentView === 'admin' ? (
-        <AdminScraperView />
-      ) : currentView === 'analytics' ? (
-        <StaffAnalyticsView />
       ) : (
-        /* Default Opportunities Catalog View */
+        /* Default Opportunities Explore Catalog View */
         <main className="flex-1">
           <HeroSection
             searchQuery={filters.searchQuery}
@@ -197,11 +171,11 @@ export default function HomePage() {
               {/* Opportunities Grid */}
               <div className="flex-1 w-full space-y-4">
                 {/* Result Status Bar */}
-                <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-                  <div className="flex items-center space-x-2 text-xs text-gray-600 font-semibold">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                  <div className="flex items-center space-x-2 text-xs text-slate-600 font-semibold">
                     <span>
                       {language === 'km' ? 'បង្ហាញ' : 'Showing'}{' '}
-                      <strong className="text-gray-900">{opportunities.length}</strong>{' '}
+                      <strong className="text-slate-900">{opportunities.length}</strong>{' '}
                       {language === 'km' ? 'ឱកាស' : 'listings'}
                     </span>
                     {filters.locationType !== 'all' && (
@@ -210,7 +184,7 @@ export default function HomePage() {
                       </span>
                     )}
                     {filters.category !== 'all' && (
-                      <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px] capitalize">
+                      <span className="px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-700 text-[11px] capitalize">
                         {filters.category}
                       </span>
                     )}
@@ -223,7 +197,7 @@ export default function HomePage() {
 
                   <button
                     onClick={loadOpportunities}
-                    className="p-1.5 text-gray-500 hover:text-blue-600 rounded-lg hover:bg-white transition-colors"
+                    className="p-1.5 text-slate-500 hover:text-blue-600 rounded-lg hover:bg-white transition-colors"
                     title="Refresh Opportunities"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600' : ''}`} />
@@ -232,15 +206,15 @@ export default function HomePage() {
 
                 {/* Grid of Opportunity Cards */}
                 {opportunities.length === 0 ? (
-                  <div className="bg-white rounded-3xl border border-dashed border-gray-300 p-12 text-center space-y-3">
-                    <Compass className="w-10 h-10 text-gray-300 mx-auto" />
-                    <h3 className="text-base font-bold text-gray-700">No matching opportunities found</h3>
-                    <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                  <div className="bg-white rounded-3xl border border-dashed border-slate-300 p-12 text-center space-y-3">
+                    <Compass className="w-10 h-10 text-slate-300 mx-auto" />
+                    <h3 className="text-base font-bold text-slate-700">No matching opportunities found</h3>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
                       Try broadening your search keywords or resetting specific filters in the sidebar.
                     </p>
                     <button
                       onClick={handleResetFilters}
-                      className="px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm"
+                      className="px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-xs"
                     >
                       Reset All Filters
                     </button>
@@ -282,16 +256,9 @@ export default function HomePage() {
         onClose={() => setShowAlertSettings(false)}
       />
 
-      {/* Staff Post Opportunity Modal */}
-      <StaffPostModal
-        isOpen={showStaffPost}
-        onClose={() => setShowStaffPost(false)}
-        onAddOpportunity={handleAddOpportunity}
-      />
-
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-6 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-2">
+      <footer className="bg-white border-t border-slate-200 py-6 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
           <p>© 2026 OpportunityHub (OppHub) • Year 5 IT Project Management</p>
           <p>Automated Scrapers strictly adhere to robots.txt & ethical crawling guidelines.</p>
         </div>
