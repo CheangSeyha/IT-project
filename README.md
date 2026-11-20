@@ -1,252 +1,328 @@
-# 🎙️ Khmer Lecture & Meeting Transcriber (KLMT)
-### *Intelligent Speech-to-Text, Speaker Diarization & Meeting Summarization for the Khmer Language*
-
-[![Project Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg)](#)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-red.svg)](https://pytorch.org/)
-[![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers-orange.svg)](https://huggingface.org/)
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2014-black.svg)](https://nextjs.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](#)
-
+# Web Information Retrieval Dashboard
+ 
+> A centralized platform that automatically crawls, normalizes, and aggregates **Job Opportunities, Upskilling Programs, Internships, and Scholarships** for Cambodia and beyond, with faceted search and personalized tracking.
+ 
 ---
-
-## 📌 1. Project Overview
-
-In university lectures and corporate meetings across Cambodia, capturing key takeaways and detailed discussions is often manual, time-consuming, and prone to omissions. While speech recognition tools exist for high-resource languages like English and Chinese, **the Khmer language remains underserved by modern Automatic Speech Recognition (ASR)**.
-
-The **Khmer Lecture & Meeting Transcriber** is an end-to-end AI-powered system designed to:
-1. **Record or upload** multi-speaker audio from university lectures, workshops, and business meetings.
-2. **Perform speaker separation (diarization)** to identify who spoke when.
-3. **Generate accurate, time-stamped Khmer transcripts** capable of recognizing mixed Khmer–English technical vocabulary.
-4. **Provide instant keyword and semantic search** with synchronized audio playback.
-5. **Produce concise, structured summaries** highlighting discussion topics, key decisions, and action items.
-
+ 
+## Table of Contents
+ 
+1. [Project Overview](#1-project-overview)
+2. [Goals & Non-Goals](#2-goals--non-goals)
+3. [Core Features](#3-core-features)
+4. [User Roles & Permissions (RBAC)](#4-user-roles--permissions-rbac)
+5. [System Architecture](#5-system-architecture)
+6. [Data Retrieval Pipeline](#6-data-retrieval-pipeline)
+7. [Search & Filter Engine](#7-search--filter-engine)
+8. [Notifications & Alerts](#8-notifications--alerts)
+9. [Non-Functional Requirements](#9-non-functional-requirements)
+10. [Legal, Ethical & Data Quality Considerations](#10-legal-ethical--data-quality-considerations)
+11. [Getting Started](#11-getting-started)
+12. [Roadmap](#12-roadmap)
+13. [Contributing & License](#13-contributing--license)
 ---
-
-## ⚡ 2. The Core Technical Challenges ("The Hard Part")
-
-Developing a high-performance speech transcription system for Cambodian academic and professional settings presents unique obstacles:
-
-1. **Low-Resource ASR for Khmer**:
-   - Out-of-the-box pre-trained models (e.g., standard OpenAI Whisper, Meta MMS) exhibit high Character Error Rates (CER) and Word Error Rates (WER) on continuous conversational Khmer due to limited representation in general web-scraped training corpora.
-2. **Code-Switching & Technical Terminology (Khmer–English)**:
-   - STEM lectures and tech meetings frequently blend Khmer syntax with English technical loanwords (e.g., *"Database"*, *"Algorithm"*, *"API"*, *"Pull Request"*, *"Front-end"*). Off-the-shelf models fail when phonetic and phonetic-to-orthographic shifts occur mid-sentence.
-3. **Khmer Script Orthography & Word Segmentation**:
-   - Khmer does not employ explicit whitespace between words. Accurate post-processing requires Khmer word segmentation (e.g., using `khmer-nltk` or CRF-based segmenters) for meaningful evaluation (WER) and text indexing.
-4. **Acoustic Diversity & Multi-Speaker Overlap**:
-   - Classroom echo, lecture hall reverberation, air conditioner hum, and overlapping cross-talk require dedicated preprocessing and robust Voice Activity Detection (VAD).
-
+ 
+## 1. Project Overview
+ 
+Opportunities for students and job seekers in Cambodia are scattered across career portals, university websites, NGO pages, embassy and scholarship boards, and social media. This project brings them into **one searchable dashboard**.
+ 
+The system:
+ 
+- **Crawls** target web sources on a schedule.
+- **Normalizes** unstructured listings into a single consistent schema.
+- **Detects duplicates** across sources.
+- **Separates Local (Cambodia) and International** opportunities with purpose-built filters for each.
+- Provides an **advanced faceted search engine**.
+- Offers **personalized tracking** (bookmarks, application status, alerts) for registered users.
+### Opportunity Types
+ 
+| Type | Examples |
+|---|---|
+| Job | Full-time, part-time, contract, remote |
+| Internship | Paid / unpaid, summer, semester-long |
+| Upskilling Program | Bootcamps, short courses, certifications, MOOCs |
+| Scholarship | Fully funded, partially funded, exchange, research grants |
+ 
 ---
-
-## 🏗️ 3. System Architecture & Workflow
-
-```mermaid
-flowchart TD
-    subgraph Audio_Input["1. Audio Ingestion"]
-        A1[Live Microphone Stream] --> A3[Audio Ingestion Module]
-        A2[Uploaded Audio / Video File] --> A3
-    end
-
-    subgraph Preprocessing["2. Audio Preprocessing & Diarization"]
-        A3 --> B1[Noise Reduction & Normalization]
-        B1 --> B2[Silero VAD / Voice Activity Detection]
-        B2 --> B3[PyAnnote Speaker Diarization]
-        B3 --> B4[Speaker-Segmented Audio Chunks + Timestamps]
-    end
-
-    subgraph ASR_Engine["3. Fine-Tuned ASR Engine"]
-        B4 --> C1[Pre-trained Base Model: Whisper / MMS]
-        C2[Domain Adapters: Khmer + Tech Lexicon] --> C1
-        C1 --> C3[Raw Khmer Text with Word Segments]
-        C3 --> C4[Post-processing & Punctuation Restoration]
-    end
-
-    subgraph NLP_Summarizer["4. NLP & Summarization"]
-        C4 --> D1[LLM / mT5 Khmer Summarizer]
-        D1 --> D2[Structured Output: Key Points, Decisions, Action Items]
-    end
-
-    subgraph Application_Layer["5. Web Application & Storage"]
-        C4 --> E1[(PostgreSQL + Full-Text Search Index)]
-        D2 --> E1
-        E1 --> E2[Interactive Transcript & Waveform Player]
-        E1 --> E3[Keyword Search & Timestamp Navigation]
-        E1 --> E4[Export: PDF, DOCX, SRT, Markdown]
-    end
+ 
+## 2. Goals & Non-Goals
+ 
+### Goals
+- Reduce the time students need to discover relevant, legitimate opportunities.
+- Give institutions (schools, career offices) a verified channel to publish opportunities.
+- Provide transparent scraper health monitoring and content moderation.
+- Support **Khmer and English** content and interface.
+### Non-Goals (initial release)
+- Hosting application submission (users are redirected to the original source).
+- Acting as a recruiter or employer-of-record.
+- Resume building or interview coaching (possible future extension).
+---
+ 
+## 3. Core Features
+ 
+### 3.1 Automated Data Retrieval
+- Scheduled scraping of career portals, university sites, and scholarship boards.
+- Configurable per-source scrapers (HTML, RSS, sitemap, JSON API, or PDF/Telegram where permitted).
+- **Duplicate detection** (exact and fuzzy) across sources and across runs.
+- Automatic **expiry handling**: listings past deadline are archived, not deleted.
+- Retry, back-off, and error logging per source.
+### 3.2 Local vs. International Segregation
+| | Local (Cambodia) | International |
+|---|---|---|
+| Location filter | Province / city (e.g., Phnom Penh, Siem Reap, Battambang) | Country / region |
+| Funding | Salary range, local benefits (NSSF, transport, meals, housing allowance) | Fully funded / partially funded / self-funded |
+| Extras | Language requirement (Khmer/English), work arrangement | Visa sponsorship, relocation support, language test (IELTS/TOEFL), citizenship eligibility |
+| Currency | KHR / USD | Original currency + USD conversion |
+ 
+### 3.3 Multi-Criteria Filter Engine
+Search and filter by:
+- Job title / keywords
+- Required skills and years of experience
+- Field of study / industry
+- Education level (high school, bachelor, master, PhD, vocational)
+- Program format (online / in-person / hybrid)
+- Application deadline (closing soon, date range)
+- Opportunity type, organization, funding, location, language
+### 3.4 User Portals & Tracking
+- **Bookmarking** of listings.
+- **Application status tracking**: `Saved → Preparing → Applied → Interview → Offer / Accepted / Rejected / Withdrawn`.
+- **Deadline reminders** and **alerts for newly matched listings**.
+- **Profile-to-requirement matching** (match score based on skills, education, field of study).
+---
+ 
+## 4. User Roles & Permissions (RBAC)
+ 
+| Capability | Public | Student | Teacher | Staff / Career Officer | Admin |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Search, filter, view open listings | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Create account / login | – | ✅ | ✅ | ✅ | ✅ |
+| Bookmark listings | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Track application status | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Set custom alert preferences | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Profile-to-listing matching | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Curate and share opportunity lists with students | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Post academic events | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Post verified institutional opportunities | ❌ | ❌ | ❌ | ✅ | ✅ |
+| View student engagement analytics | ❌ | ❌ | ❌ (own class only, optional) | ✅ | ✅ |
+| Manage scraper target URLs | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Monitor scraper health | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Moderate content (approve / reject / flag) | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Manage users and roles | ❌ | ❌ | ❌ | ❌ | ✅ |
+ 
+### Role Details
+- **Public Users** – Anonymous browsing and search only.
+- **Students** – Personal dashboard with saved items, application pipeline, alert rules, and match scores.
+- **Teachers** – Create *collections* (e.g., "Scholarships for Engineering Seniors"), share them with specific students or classes, and post academic events.
+- **Staff / Career Officers** – Publish institution-verified listings (displayed with a **Verified** badge) and view aggregate engagement analytics (views, saves, applications, click-throughs).
+- **Admin** – Full system control, including scraper configuration, moderation queue, audit logs, and user/role management.
+---
+ 
+## 5. System Architecture
+ 
 ```
-
----
-
-## ✨ 4. Key Features
-
-- **🎙️ Dual Input Modes**: Real-time meeting recording via browser microphone or file upload (`.mp3`, `.wav`, `.m4a`, `.mp4`).
-- **👥 Speaker Diarization**: Automatically labels speakers (e.g., `Speaker 1 (Lecturer)`, `Speaker 2 (Student)`) with exact start and end timestamps.
-- **⏱️ Synchronized Interactive Transcript**: Click on any transcribed word or sentence to jump the audio player directly to that exact moment in the recording.
-- **🔍 Full-Text Transcript Search**: Quickly locate specific keywords, technical terms, or speaker remarks across long 2-hour recordings.
-- **📝 Automated Intelligent Summarization**:
-  - **Executive Summary**: High-level overview of the session.
-  - **Topic Breakdown**: Chronological or thematic sections.
-  - **Action Items & Questions**: Extracted tasks, deadlines, and questions asked during the session.
-- **💾 Multi-Format Export**: Export transcripts and notes to PDF, Microsoft Word (`.docx`), Subtitles (`.srt`, `.vtt`), and Markdown (`.md`).
-
----
-
-## 📊 5. Data Strategy & Datasets
-
-To overcome the low-resource hurdle and technical code-switching, we combine open public datasets with custom domain data:
-
-| Dataset / Source | Estimated Hours | Focus Area | Role in Project |
-| :--- | :--- | :--- | :--- |
-| **OpenSLR 42 (Khmer Large Speech Corpus)** | ~50+ hours | Native continuous read speech | Base acoustic & linguistic alignment |
-| **Google FLEURS (Khmer subset)** | ~12 hours | Multi-speaker read sentences | Multi-accent & acoustic fine-tuning |
-| **Mozilla Common Voice (Khmer)** | Community pool | Diverse speakers & accents | Acoustic robustness |
-| **Custom Academic & Meeting Corpus** | ~10–20 hours | IT/Tech lectures, discussions & mixed terms | Domain adaptation for code-switching |
-
-### Data Preparation Pipeline:
-1. **Audio Standardization**: Resampling to 16kHz mono WAV, loudness normalization (EBU R128).
-2. **Text Normalization**: Khmer Unicode normalization, cleaning zero-width spaces (`\u200B`), standardizing punctuation.
-3. **Phonetic & Technical Lexicon**: Building a specialized vocabulary mapping for common English loanwords transcribed or spoken phonetically in Khmer.
-
----
-
-## 🛠️ 6. Technology Stack
-
-### Machine Learning & Audio Processing
-- **ASR Foundation**: [OpenAI Whisper](https://github.com/openai/whisper) (Fine-tuned `whisper-small` / `whisper-medium`) or [Meta MMS (Massively Multilingual Speech)](https://huggingface.co/facebook/mms-1b-all)
-- **Speaker Diarization**: [PyAnnote Audio](https://github.com/pyannote/pyannote-audio)
-- **Voice Activity Detection (VAD)**: [Silero VAD](https://github.com/snakers4/silero-vad)
-- **Khmer NLP & Segmentation**: `khmer-nltk`, `sefr-cut` / Khmer word segmenter
-- **Summarization**: Fine-tuned `google/mt5-base` / `Qwen` / `Mistral` or Prompt-Engineered LLMs (Gemma / Claude / GPT) with Khmer instructional prompts
-- **Evaluation**: `jiwer` (CER/WER computation), `rouge-score`, `pyannote.metrics` (DER)
-
-### Backend & Data Management
-- **API Framework**: FastAPI (Asynchronous Python)
-- **Task Queue**: Celery + Redis (for asynchronous handling of heavy audio inference jobs)
-- **Database**: PostgreSQL (Metadata, users, transcript logs)
-- **Search Engine**: PostgreSQL Full-Text Search / SQLite FTS5 / Meilisearch
-
-### Frontend
-- **Framework**: Next.js 14 / React with TypeScript
-- **Styling**: Tailwind CSS + shadcn/ui
-- **Audio Waveform & Playback**: Wavesurfer.js (waveform visualization, audio regions, interactive timestamp jumping)
-
----
-
-## 👥 7. Team Structure & Work Breakdown
-
-To ensure systematic execution across the IT Project Management lifecycle, responsibilities are divided into 5 core tracks:
-
+┌────────────────────────────────────────────────────────────────────┐
+│                           Web Sources                              │
+│  Career portals · University sites · Scholarship boards · RSS/API  │
+└───────────────┬────────────────────────────────────────────────────┘
+                │ scheduled crawl
+┌───────────────▼────────────────┐
+│  Scraper Workers (queue-based) │  → raw HTML/JSON stored (raw store)
+└───────────────┬────────────────┘
+                │
+┌───────────────▼────────────────┐
+│  Parsing & Normalization       │  extract → clean → classify → geocode
+│  (rules + optional NLP/LLM)    │
+└───────────────┬────────────────┘
+                │
+┌───────────────▼────────────────┐
+│  Deduplication & Enrichment    │  hashing · fuzzy match · skill tagging
+└───────────────┬────────────────┘
+                │
+     ┌──────────▼──────────┐        ┌──────────────────────┐
+     │  Primary Database   │◄──────►│  Search Index        │
+     │  (relational)       │        │  (full-text/faceted) │
+     └──────────┬──────────┘        └──────────┬───────────┘
+                │                              │
+        ┌───────▼──────────────────────────────▼───────┐
+        │                 Backend API                  │
+        │   Auth · RBAC · Search · Tracking · Admin    │
+        └───────┬──────────────────────┬───────────────┘
+                │                      │
+        ┌───────▼───────┐      ┌───────▼────────┐
+        │ Web Frontend  │      │ Notification   │
+        │ (Dashboard)   │      │ Service        │
+        └───────────────┘      │ Email/Push/etc │
+                               └────────────────┘
 ```
-├── 📁 1. Data Collection & Labelling
-├── 📁 2. Model Fine-Tuning (ASR)
-├── 📁 3. Audio Pipeline & Speaker Separation
-├── 📁 4. Web Application & Search
-└── 📁 5. Summarisation & Evaluation
-```
-
-| Member / Role | Core Responsibilities | Expected Deliverables |
-| :--- | :--- | :--- |
-| **1. Data Collection & Labelling** | • Sourcing public datasets (FLEURS, OpenSLR 42)<br>• Recording real IT lecture/meeting audio samples<br>• Auditing and transcribing mixed Khmer–English technical terms<br>• Text normalization & data formatting for Hugging Face datasets | • Curated & balanced training/test datasets<br>• Custom IT domain test benchmark<br>• Annotation guidelines document |
-| **2. Model Fine-Tuning** | • Environment setup on GPU (PyTorch/Hugging Face)<br>• Fine-tuning Whisper / Wav2Vec2 on Khmer corpora<br>• Hyperparameter tuning (learning rate, LoRA / PEFT adapters)<br>• Code-switching optimization & model quantization (INT8/FP16) | • Fine-tuned checkpoint repository<br>• Training loss & validation reports<br>• Optimized inference pipeline |
-| **3. Audio Pipeline & Diarization** | • Audio ingestion & format conversion (FFmpeg)<br>• Noise filtering & audio normalization<br>• Voice Activity Detection (VAD) chunking<br>• Multi-speaker diarization integration (PyAnnote) | • Robust audio preprocessing script<br>• Speaker timestamp alignment module<br>• End-to-end audio processing pipeline |
-| **4. Web Application & Search** | • Next.js UI/UX design (dashboard, audio player, transcript view)<br>• FastAPI backend & async job worker integration<br>• Interactive time-synced audio player (Wavesurfer.js)<br>• Transcript search engine & export utilities (PDF/SRT) | • Fully functional web application<br>• Interactive search & audio playback UI<br>• REST API documentation |
-| **5. Summarisation & Evaluation** | • Benchmark model ASR accuracy (CER, WER with Khmer segmentation)<br>• Benchmark Diarization Error Rate (DER)<br>• Develop Khmer lecture/meeting summarization prompts/models<br>• Action item and key discussion topic extraction | • Evaluation benchmark report (CER/WER tables)<br>• Summarization module & prompt templates<br>• User acceptance testing (UAT) results |
-
+ 
 ---
-
-## 📅 8. Project Roadmap & Milestones
-
-```mermaid
-gantt
-    title IT Project Lifecycle & Milestones
-    dateFormat  YYYY-MM-DD
-    section Phase 1: Planning & Data
-    Project Charter & Requirements       :done,    p1_1, 2026-10-01, 2026-10-15
-    Data Collection (OpenSLR, FLEURS)    :active,  p1_2, 2026-10-16, 2026-11-05
-    Technical Lexicon & Audio Auditing  :active,  p1_3, 2026-11-01, 2026-11-20
-    section Phase 2: Core AI Engineering
-    Audio Pipeline & VAD Setup           :         p2_1, 2026-11-15, 2026-12-05
-    Speaker Diarization (PyAnnote)       :         p2_2, 2026-11-25, 2026-12-20
-    ASR Baseline Benchmarking            :         p2_3, 2026-11-20, 2026-12-05
-    Model Fine-Tuning (Whisper-Khmer)    :         p2_4, 2026-12-05, 2027-01-10
-    section Phase 3: Web App & NLP
-    Backend API & Async Worker Queue     :         p3_1, 2026-12-20, 2027-01-15
-    Web Frontend & Waveform Player       :         p3_2, 2027-01-05, 2027-01-30
-    Khmer Summarizer Integration         :         p3_3, 2027-01-15, 2027-02-10
-    section Phase 4: Testing & Deployment
-    Full-Text Search & Export Features   :         p4_1, 2027-02-01, 2027-02-20
-    End-to-End Evaluation (CER/WER/DER)  :         p4_2, 2027-02-15, 2027-03-05
-    Final Presentation & Documentation   :         p4_3, 2027-03-01, 2027-03-20
-```
-
+ 
+## 6. Data Retrieval Pipeline
+ 
+1. **Source Registry** – Admin registers a source (URL, type, schedule, parser config, category, local/international flag).
+2. **Scheduler** – Triggers jobs (e.g., every 6h for job boards, daily for scholarships).
+3. **Fetch** – Respects `robots.txt`, rate limits, custom headers, and retry/back-off.
+4. **Parse** – Extracts raw fields using CSS/XPath selectors, JSON mapping, or text extraction.
+5. **Normalize** – Maps to the unified schema:
+   - Standardize dates, currencies, location names (including Khmer ↔ English province names).
+   - Classify opportunity type, education level, field of study.
+   - Extract skills from free text (taxonomy + NLP).
+6. **Deduplicate**
+   - *Exact*: hash of `(normalized title + organization + deadline + source URL)`.
+   - *Fuzzy*: similarity on title/organization/description (e.g., MinHash or trigram similarity) with a configurable threshold.
+   - Merge duplicates into one canonical listing, keeping all source links.
+7. **Validate & Flag** – Detect missing fields, suspicious/scam patterns, dead links; send low-confidence items to the moderation queue.
+8. **Index & Publish** – Save to DB, update search index, trigger alert matching.
+9. **Monitor** – Record run stats: duration, items found, new/updated/duplicate, errors, and last success time.
+### Scraper Health Metrics (Admin Dashboard)
+- Last run status and timestamp
+- Success rate (7/30 days)
+- New listings per run
+- Parse error rate / schema drift detection (alert when selectors stop matching)
+- Average response time and HTTP error breakdown
 ---
-
-## 📈 9. Evaluation Metrics
-
-To scientifically measure the success of the system, the project evaluates each component using industry-standard metrics:
-
-1. **Automatic Speech Recognition (ASR)**:
-   - **CER (Character Error Rate)**: Primary metric for Khmer due to lack of spacing ($CER = \frac{S + D + I}{N_{chars}}$).
-   - **WER (Word Error Rate)**: Calculated after automated Khmer word segmentation to assess readability.
-   - **Code-Switching Accuracy**: Custom accuracy score on targeted English technical keywords.
-2. **Speaker Diarization**:
-   - **DER (Diarization Error Rate)**: False Alarm + Missed Detection + Speaker Confusion.
-3. **Summarization**:
-   - **ROUGE-1, ROUGE-2, ROUGE-L**: Comparing generated summaries with human-written lecture/meeting minutes.
-   - **Human Qualitative Rubric**: Coverage of key points, clarity, hallucination rate, and action item accuracy.
-
+ 
+## 7. Search & Filter Engine
+ 
+### Capabilities
+- Full-text search with typo tolerance and synonym handling (e.g., "dev" ↔ "developer").
+- **Bilingual search** (Khmer and English).
+- Faceted navigation with live result counts.
+- Sorting: relevance, newest, closing soon, salary, best match (logged-in students).
+- Saved searches that can be converted into alerts.
+### Facets
+ 
+| Facet | Local | International |
+|---|:---:|:---:|
+| Opportunity type | ✅ | ✅ |
+| Job title / keyword | ✅ | ✅ |
+| Skills & experience level | ✅ | ✅ |
+| Field of study | ✅ | ✅ |
+| Education level | ✅ | ✅ |
+| Format (online / in-person / hybrid) | ✅ | ✅ |
+| Deadline | ✅ | ✅ |
+| Province / city | ✅ | – |
+| Salary range & local benefits | ✅ | – |
+| Country / region | – | ✅ |
+| Funding (full / partial) | – | ✅ |
+| Visa sponsorship | – | ✅ |
+| Language / test requirement | ✅ | ✅ |
+| Verified only | ✅ | ✅ |
+ 
 ---
-
-## 🚀 10. Getting Started (Development Setup)
-
+ 
+## 8. Notifications & Alerts
+ 
+- **Triggers**: new listing matches an alert rule, approaching deadline (e.g., 7 / 3 / 1 days), application status reminder, teacher-shared collection updates.
+- **Channels**: in-app, email (MVP); Telegram bot and web push (recommended for Cambodia, where Telegram is widely used); SMS optional.
+- **Controls**: frequency (instant / daily digest / weekly), quiet hours, per-channel opt-out.
+---
+ 
+## 9. Non-Functional Requirements
+ 
+| Area | Requirement |
+|---|---|
+| **Performance** | Search results < 500 ms (p95) for typical queries |
+| **Scalability** | Horizontally scalable scraper workers and API |
+| **Availability** | Target 99.5% uptime; graceful degradation if a scraper fails |
+| **Security** | Hashed passwords (Argon2/bcrypt), JWT/session security, RBAC enforcement on every endpoint, CSRF/XSS/SQLi protection, rate limiting |
+| **Privacy** | Minimal PII collection, consent for notifications, user data export/deletion |
+| **Localization** | Khmer + English UI, Khmer Unicode fonts, date/number/currency formatting |
+| **Accessibility** | WCAG 2.1 AA |
+| **Mobile** | Mobile-first responsive design (most users in Cambodia browse on mobile) |
+| **Low bandwidth** | Lightweight pages, lazy loading, optional PWA |
+| **Observability** | Structured logs, metrics, alerting, audit trail |
+| **Backups** | Daily DB backups and tested restore procedure |
+ 
+---
+ 
+## 10. Legal, Ethical & Data Quality Considerations
+ 
+- **Respect `robots.txt`** and each site's Terms of Service; prefer official APIs, RSS feeds, or partnerships where available.
+- **Throttle requests** and identify the crawler with a clear User-Agent and contact email.
+- **Attribution**: always link back to the original source; do not copy full content where unnecessary.
+- **Scam protection**: flag listings that ask for fees, use suspicious domains, or lack organization details. Show a **Verified** badge only for staff-posted or admin-verified items.
+- **Data freshness**: display "last checked" timestamps and auto-hide expired/dead listings.
+- **Takedown process**: provide a way for organizations to request removal or correction.
+- **Personal data**: comply with applicable data protection practices; store only what is needed.
+---
+ 
+## 11. Getting Started
+ 
+> Placeholder instructions; update once the stack is finalized.
+ 
 ### Prerequisites
-- Python 3.10 or higher
-- Node.js 18+ & npm/pnpm
-- FFmpeg installed (`brew install ffmpeg` on macOS, `sudo apt install ffmpeg` on Ubuntu)
-- NVIDIA GPU with CUDA recommended for training and local inference
-
-### 1. Clone the Repository
+- Docker & Docker Compose
+- Node.js ≥ 20 and/or Python ≥ 3.11
+- PostgreSQL and Redis (provided via Docker Compose)
+### Setup
+ 
 ```bash
-git clone https://github.com/CheangSeyha/IT-project.git
-cd IT-project
+# 1. Clone the repository
+git clone https://github.com/<your-org>/<repo-name>.git
+cd <repo-name>
+ 
+# 2. Configure environment variables
+cp .env.example .env
+ 
+# 3. Start services
+docker compose up -d
+ 
+# 4. Run database migrations and seed data
+make migrate
+make seed        # includes default admin + sample sources
+ 
+# 5. Open the app
+# Frontend: http://localhost:3000
+# API docs: http://localhost:8000/docs
 ```
-
-### 2. Backend & ML Environment
-```bash
-# Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### 3. Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
+ 
 ---
-
-## 📜 11. Project Management & Governance
-
-- **Methodology**: Agile / Scrum (2-week sprint cycles with sprint reviews and retrospectives).
-- **Issue Tracking**: GitHub Issues & Projects (Kanban board).
-- **Version Control**: Feature branching (`feat/diarization`, `feat/whisper-finetune`, `feat/frontend-player`) with mandatory pull request reviews.
-
+ 
+## 12. Roadmap
+ 
+### Phase 1 – MVP
+- [ ] Source registry + 5–10 initial scrapers
+- [ ] Normalization schema + basic deduplication
+- [ ] Public search with core filters (local/international)
+- [ ] Auth + RBAC (Public, Student, Admin)
+- [ ] Bookmarks + application tracking
+- [ ] Admin: manage sources, view scraper health
+### Phase 2 – Engagement
+- [ ] Email alerts and saved searches
+- [ ] Teacher collections and event posting
+- [ ] Staff verified postings + moderation workflow
+- [ ] Khmer/English bilingual UI and search
+- [ ] Deadline reminders
+### Phase 3 – Intelligence
+- [ ] Profile-to-requirement match scoring and recommendations
+- [ ] Engagement analytics for staff
+- [ ] Telegram bot + web push
+- [ ] Fuzzy/semantic dedup and scam detection
+- [ ] Auto-detection of scraper breakage (schema drift)
+### Phase 4 – Growth
+- [ ] Mobile app / PWA enhancements
+- [ ] Employer/organization self-service portal
+- [ ] Public API & partner integrations
+- [ ] Calendar sync (Google/Outlook .ics)
+- [ ] Resume/CV and document checklist helpers
 ---
-
-## 📄 12. References & Acknowledgments
-
-- **Google FLEURS Dataset**: [FLEURS Speech Dataset on Hugging Face](https://huggingface.co/datasets/google/fleurs)
-- **OpenSLR 42**: [Khmer Large Speech Corpus](https://www.openslr.org/42/)
-- **OpenAI Whisper**: Radford et al., *Robust Speech Recognition via Large-Scale Weak Supervision*
-- **PyAnnote Audio**: Bredin et al., *pyannote.audio: neural building blocks for speaker diarization*
-- **Khmer NLP Tools**: [khmer-nltk](https://github.com/seanghay/khmer-nltk)
-
+ 
+## 13. Contributing & License
+ 
+### Contributing
+1. Fork the repository and create a feature branch (`feature/<name>`).
+2. Follow the code style and commit message conventions (e.g., Conventional Commits).
+3. Add tests for new scrapers and features (use saved HTML fixtures for scraper tests).
+4. Open a pull request with a clear description.
+### Adding a New Scraper
+1. Add the source in the Admin panel (or `sources.yaml` for seeding).
+2. Create a parser config/module under `services/scraper/sources/`.
+3. Add a fixture and test under `tests/scraper/`.
+4. Verify normalization and dedup output before enabling the schedule.
+### License
+Choose a license (e.g., MIT, Apache-2.0) and add it as `LICENSE`.
+ 
 ---
-
-*This project is conducted as part of the **Year 5 IT Project Management** curriculum.*
+ 
+*Maintainers: TopSquad
+ 
