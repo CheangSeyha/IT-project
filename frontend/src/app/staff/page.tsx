@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import {
@@ -15,8 +15,8 @@ import {
   Trash2,
   FileCheck2,
 } from 'lucide-react';
-import { Opportunity } from '@/types';
-import { fallbackOpportunities } from '@/services/api';
+import { Opportunity, FilterState } from '@/types';
+import { fallbackOpportunities, fetchOpportunities, deleteOpportunity } from '@/services/api';
 import { Navbar } from '@/components/Navbar';
 import { StaffAnalyticsView } from '@/components/StaffAnalyticsView';
 import { StaffPostModal } from '@/components/StaffPostModal';
@@ -28,6 +28,16 @@ export default function StaffPage() {
     fallbackOpportunities.filter(o => o.is_verified)
   );
 
+  useEffect(() => {
+    fetchOpportunities({ verifiedOnly: true } as Partial<FilterState> as FilterState)
+      .then(res => {
+        if (res && res.items && res.items.length > 0) {
+          setInstitutionalOpps(res.items.filter(o => o.is_verified));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const handleAddOpportunity = (newOpp: Opportunity) => {
     setInstitutionalOpps(prev => [newOpp, ...prev]);
     toast.success('Verified Institutional Opportunity Published!', {
@@ -35,9 +45,14 @@ export default function StaffPage() {
     });
   };
 
-  const handleDeletePosting = (id: number) => {
+  const handleDeletePosting = async (id: number) => {
     setInstitutionalOpps(prev => prev.filter(o => o.id !== id));
-    toast.info('Posting deleted from institutional listings');
+    try {
+      await deleteOpportunity(id);
+      toast.info('Posting deleted from institutional database');
+    } catch {
+      toast.info('Posting removed locally');
+    }
   };
 
   return (

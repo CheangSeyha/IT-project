@@ -21,7 +21,9 @@ interface OpportunityCardProps {
   opportunity: Opportunity;
   onSelect: (opp: Opportunity) => void;
   onToggleBookmark: (id: number) => void;
-  onTrack: (opp: Opportunity) => void;
+  onTrack?: (opp: Opportunity) => void;
+  onApply?: (opp: Opportunity) => void;
+  isApplied?: boolean;
 }
 
 export const OpportunityCard: React.FC<OpportunityCardProps> = ({
@@ -29,6 +31,8 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   onSelect,
   onToggleBookmark,
   onTrack,
+  onApply,
+  isApplied = false,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -54,6 +58,11 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
         return {
           badge: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
           avatarBg: 'bg-gradient-to-br from-emerald-500 to-teal-700',
+        };
+      case 'school_work':
+        return {
+          badge: 'bg-indigo-50 text-indigo-800 border-indigo-200/80',
+          avatarBg: 'bg-gradient-to-br from-indigo-600 to-violet-700',
         };
       default:
         return {
@@ -94,14 +103,6 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     } else {
       toast.info('Removed from bookmarks');
     }
-  };
-
-  const handleTrackPipeline = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onTrack(opportunity);
-    toast.success('Added to Application Pipeline', {
-      description: 'You can now monitor milestones in My Applications.',
-    });
   };
 
   // Format deadline and check if closing soon
@@ -245,16 +246,40 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
         </div>
 
         <div className="flex items-center space-x-2">
-          <button
-            onClick={handleTrackPipeline}
-            className="px-2.5 py-1 text-xs font-semibold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
-          >
-            Track Pipeline
-          </button>
+          {onTrack && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onTrack(opportunity);
+                toast.success('Opportunity tracked in pipeline');
+              }}
+              className="px-2 py-1 text-[11px] font-semibold rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+              title="Track in Pipeline"
+            >
+              Track
+            </button>
+          )}
+
+          {isApplied ? (
+            <span className="px-2.5 py-1 text-xs font-extrabold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center space-x-1">
+              <Check className="w-3.5 h-3.5" />
+              <span>Applied</span>
+            </span>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onApply) onApply(opportunity);
+              }}
+              className="px-2.5 py-1 text-xs font-bold rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xs hover:shadow transition-all"
+            >
+              Apply as Student
+            </button>
+          )}
 
           <button
             onClick={() => onSelect(opportunity)}
-            className="px-3 py-1 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs hover:shadow transition-all inline-flex items-center space-x-1"
+            className="px-3 py-1 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all inline-flex items-center space-x-1"
           >
             <span>Details</span>
             <ArrowUpRight className="w-3.5 h-3.5" />

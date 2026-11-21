@@ -22,8 +22,8 @@ class OpportunityBase(BaseModel):
     visa_sponsorship: bool = False
     language_requirements: Optional[str] = None
     deadline: Optional[datetime] = None
-    source_url: str
-    source_name: str
+    source_url: str = "https://opphub.kh/verified-post"
+    source_name: str = "OppHub Verified Listing"
     is_verified: bool = False
 
 

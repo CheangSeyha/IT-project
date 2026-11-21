@@ -139,7 +139,7 @@ async def create_opportunity(
 async def delete_opportunity(
     opportunity_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN])),
+    current_user: User = Depends(require_role([UserRole.TEACHER, UserRole.STAFF, UserRole.ADMIN])),
 ):
     res = await db.execute(select(Opportunity).where(Opportunity.id == opportunity_id))
     opp = res.scalars().first()

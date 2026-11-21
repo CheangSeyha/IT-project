@@ -1,4 +1,4 @@
-export type OpportunityCategory = 'job' | 'internship' | 'upskilling' | 'scholarship';
+export type OpportunityCategory = 'job' | 'internship' | 'upskilling' | 'scholarship' | 'school_work';
 export type LocationType = 'local' | 'international';
 export type WorkFormat = 'on_site' | 'remote' | 'hybrid';
 export type ApplicationStatus = 'saved' | 'preparing' | 'applied' | 'interviewing' | 'offered' | 'rejected';

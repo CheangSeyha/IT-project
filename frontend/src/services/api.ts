@@ -10,6 +10,7 @@ import {
   AlertSettings,
   StaffAnalyticsData,
   UserRole,
+  ApplicationStatus,
 } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
@@ -307,6 +308,58 @@ export const fallbackOpportunities: Opportunity[] = [
     is_bookmarked: false,
     created_at: new Date().toISOString(),
     matchScore: 88,
+  },
+  {
+    id: 11,
+    title: "Faculty Research Assistant & Academic Capstone: Khmer NLP & LLMs",
+    organization: "Faculty of Computer Science & Engineering",
+    category: "school_work",
+    location_type: "local",
+    country: "Cambodia",
+    province_city: "Phnom Penh",
+    work_format: "hybrid",
+    field_of_study: "Computer Science & Artificial Intelligence",
+    education_level: "Undergraduate (Year 3 or 4)",
+    description: "Undergraduate research and school work position assisting Prof. David Kim on transformer-based Khmer semantic analysis and OCR parsing. Qualifies for 6 academic course credits and research stipend.",
+    requirements: "Enrolled in Year 3 or 4 CS/IT. Strong interest in Python, Natural Language Processing, and PyTorch.",
+    skills: "Python, NLP, PyTorch, Khmer Script Processing, Git",
+    salary_or_funding: "6 Academic Credits + $250 / month Research Stipend",
+    local_benefits: "Faculty recommendation letter, lab access, co-author credit on conference paper",
+    visa_sponsorship: false,
+    language_requirements: "Khmer & English",
+    deadline: new Date(Date.now() + 21 * 86400000).toISOString(),
+    source_url: "https://cadt.edu.kh/faculty-research/khmer-nlp",
+    source_name: "Faculty Academic Bulletin",
+    is_verified: true,
+    is_bookmarked: false,
+    created_at: new Date().toISOString(),
+    matchScore: 98,
+  },
+  {
+    id: 12,
+    title: "University Lab Assistant & Student Mentorship Program",
+    organization: "Department of Information Technology",
+    category: "school_work",
+    location_type: "local",
+    country: "Cambodia",
+    province_city: "Phnom Penh",
+    work_format: "on_site",
+    field_of_study: "Information Technology",
+    education_level: "Undergraduate Student",
+    description: "Assist faculty instructors in laboratory sessions for Year 1 and 2 students in Web Development and Database systems. Great for students wanting to reinforce their foundations.",
+    requirements: "Completed Data Structures and Database Systems courses with grade B+ or above.",
+    skills: "Mentorship, React, SQL, Teaching, Problem Solving",
+    salary_or_funding: "3 Academic Credits + $180 / month Tuition Subsidy",
+    local_benefits: "Department Certificate of Merit, Priority Thesis Supervisor Selection",
+    visa_sponsorship: false,
+    language_requirements: "Khmer",
+    deadline: new Date(Date.now() + 16 * 86400000).toISOString(),
+    source_url: "https://cadt.edu.kh/lab-assistant",
+    source_name: "Faculty Academic Bulletin",
+    is_verified: true,
+    is_bookmarked: false,
+    created_at: new Date().toISOString(),
+    matchScore: 92,
   }
 ];
 
@@ -481,8 +534,14 @@ export async function fetchOpportunities(filters?: FilterState): Promise<{ items
       if (filters.closingSoonOnly) params.append('closing_soon', 'true');
     }
 
+    const token = getStoredToken();
+    const headers: Record<string, string> = { 'Accept': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE_URL}/opportunities?${params.toString()}`, {
-      headers: { 'Accept': 'application/json' },
+      headers,
     });
 
     if (response.ok) {
@@ -891,4 +950,169 @@ export async function fetchOpportunityById(id: number): Promise<Opportunity | nu
     if (res.ok) return await res.json();
   } catch {}
   return fallbackOpportunities.find(o => o.id === id) || null;
+}
+
+export async function applyToOpportunity(
+  opportunityId: number,
+  notes?: string
+): Promise<{ success: boolean; data?: unknown }> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/tracking/applications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          opportunity_id: opportunityId,
+          status: 'applied',
+          notes: notes || 'Submitted directly via OpportunityHub Student Portal',
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { success: true, data };
+      }
+    } catch (e) {
+      console.warn("Backend apply error, saving locally", e);
+    }
+  }
+  return { success: true, data: { opportunity_id: opportunityId, status: 'applied', notes } };
+}
+
+export async function fetchApplications(): Promise<Record<number, ApplicationStatus>> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/tracking/applications`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const list = await res.json();
+        const map: Record<number, ApplicationStatus> = {};
+        for (const item of list) {
+          map[item.opportunity_id] = item.status;
+        }
+        return map;
+      }
+    } catch (e) {
+      console.warn("Backend fetch applications failed, using local state", e);
+    }
+  }
+  return {
+    1: 'preparing',
+    3: 'applied',
+    6: 'saved',
+    7: 'interviewing',
+  };
+}
+
+export async function updateApplicationTracker(
+  opportunityId: number,
+  status: ApplicationStatus,
+  notes?: string
+): Promise<void> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      await fetch(`${API_BASE_URL}/tracking/applications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          opportunity_id: opportunityId,
+          status: status,
+          notes: notes,
+        }),
+      });
+    } catch {}
+  }
+}
+
+export async function toggleBookmarkApi(opportunityId: number): Promise<boolean> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/tracking/bookmarks/${opportunityId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.bookmarked;
+      }
+    } catch {}
+  }
+  return false;
+}
+
+export async function fetchCuratedCollections(): Promise<CuratedCollection[]> {
+  const token = getStoredToken();
+  try {
+    const res = await fetch(`${API_BASE_URL}/tracking/curated`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    });
+    if (res.ok) {
+      const list = await res.json();
+      return list.map((c: { id: number; title: string; target_group?: string; description?: string; opportunity_ids?: string; created_at?: string }) => ({
+        id: c.id,
+        title: c.title,
+        author: 'Faculty & Career Services',
+        targetGroup: c.target_group || 'University Cohort',
+        description: c.description || '',
+        opportunityIds: c.opportunity_ids ? c.opportunity_ids.split(',').map((x: string) => parseInt(x, 10)).filter((n: number) => !isNaN(n)) : [],
+        createdAt: c.created_at ? new Date(c.created_at).toLocaleDateString() : 'Recent',
+        viewsCount: 120,
+      }));
+    }
+  } catch {}
+  return fallbackCuratedCollections;
+}
+
+export async function createCuratedCollection(data: {
+  title: string;
+  description?: string;
+  opportunity_ids: number[];
+  target_group?: string;
+}): Promise<CuratedCollection> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/tracking/curated`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const c = await res.json();
+        return {
+          id: c.id,
+          title: c.title,
+          author: 'Teacher / Faculty',
+          targetGroup: c.target_group || 'All Cohorts',
+          description: c.description || '',
+          opportunityIds: c.opportunity_ids ? c.opportunity_ids.split(',').map((x: string) => parseInt(x)).filter((n: number) => !isNaN(n)) : [],
+          createdAt: 'Just now',
+          viewsCount: 1,
+        };
+      }
+    } catch {}
+  }
+  return {
+    id: Date.now(),
+    title: data.title,
+    author: 'Prof. David Kim (Faculty of CS & IT)',
+    targetGroup: data.target_group || 'Year 4 CS Students',
+    description: data.description || '',
+    opportunityIds: data.opportunity_ids,
+    createdAt: 'Just now',
+    viewsCount: 0,
+  };
 }

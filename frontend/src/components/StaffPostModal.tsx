@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import { Opportunity, OpportunityCategory, LocationType, WorkFormat } from '@/types';
+import { createOpportunity } from '@/services/api';
 import { X, ShieldCheck, Plus, Check } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface StaffPostModalProps {
   isOpen: boolean;
@@ -33,36 +35,39 @@ export const StaffPostModal: React.FC<StaffPostModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newOpp: Opportunity = {
-      id: Date.now(),
-      title,
-      organization,
-      category,
-      location_type: locationType,
-      country: locationType === 'local' ? 'Cambodia' : country,
-      province_city: locationType === 'local' ? provinceCity : undefined,
-      work_format: workFormat,
-      salary_or_funding: salaryOrFunding,
-      local_benefits: locationType === 'local' ? localBenefits : undefined,
-      visa_sponsorship: visaSponsorship,
-      skills,
-      description,
-      requirements,
-      source_url: sourceUrl || 'https://opphub.kh/verified-post',
-      source_name: 'Verified Career Center Posting',
-      is_verified: true,
-      created_at: new Date().toISOString(),
-      deadline: new Date(Date.now() + 30 * 86400000).toISOString(),
-    };
+    try {
+      const oppPayload: Partial<Opportunity> = {
+        title,
+        organization,
+        category,
+        location_type: locationType,
+        country: locationType === 'local' ? 'Cambodia' : country,
+        province_city: locationType === 'local' ? provinceCity : undefined,
+        work_format: workFormat,
+        salary_or_funding: salaryOrFunding,
+        local_benefits: locationType === 'local' ? localBenefits : undefined,
+        visa_sponsorship: visaSponsorship,
+        skills,
+        description,
+        requirements,
+        source_url: sourceUrl || 'https://opphub.kh/verified-post',
+        source_name: 'Verified Career Center Posting',
+        is_verified: true,
+        deadline: new Date(Date.now() + 30 * 86400000).toISOString(),
+      };
 
-    onAddOpportunity(newOpp);
-    setSuccess(true);
-    setTimeout(() => {
-      setSuccess(false);
-      onClose();
-    }, 1000);
+      const created = await createOpportunity(oppPayload);
+      onAddOpportunity(created);
+      setSuccess(true);
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 1000);
+    } catch {
+      toast.error('Failed to publish opportunity');
+    }
   };
 
   return (

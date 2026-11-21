@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -23,8 +23,9 @@ import {
 } from 'lucide-react';
 import { loginUser, registerUser } from '@/services/api';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [authMode, setAuthMode] = useState<'signin' | 'register'>('signin');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -44,6 +45,17 @@ export default function LoginPage() {
     fieldOfStudy: 'Computer Science & IT',
     educationLevel: 'Undergraduate (Year 3/4)',
   });
+
+  useEffect(() => {
+    const mode = searchParams.get('mode');
+    if (mode === 'register') {
+      setAuthMode('register');
+    }
+    const roleParam = searchParams.get('role');
+    if (roleParam && ['student', 'teacher', 'staff', 'public'].includes(roleParam)) {
+      setRegisterData(prev => ({ ...prev, role: roleParam as 'student' | 'teacher' | 'staff' | 'public' }));
+    }
+  }, [searchParams]);
 
   // 1-Click Fast Demo Logins
   const handleDemoLogin = async (demoEmail: string, roleName: string) => {
@@ -651,5 +663,13 @@ export default function LoginPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center text-xs font-bold text-slate-500">Loading OpportunityHub Auth...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

@@ -1,27 +1,55 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Opportunity, ApplicationStatus, UserRole, FilterState, Language } from '@/types';
-import { fetchOpportunities, fallbackOpportunities } from '@/services/api';
+import { Opportunity, ApplicationStatus, UserRole, FilterState, Language, User } from '@/types';
+import {
+  fetchOpportunities,
+  fallbackOpportunities,
+  getStoredUser,
+  fetchApplications,
+  updateApplicationTracker,
+} from '@/services/api';
 import { Navbar } from '@/components/Navbar';
 import { HeroSection } from '@/components/HeroSection';
+import { RolePathwaysSection } from '@/components/RolePathwaysSection';
 import { FilterSidebar } from '@/components/FilterSidebar';
 import { OpportunityCard } from '@/components/OpportunityCard';
 import { OpportunityModal } from '@/components/OpportunityModal';
+import { AuthPromptModal } from '@/components/AuthPromptModal';
+import { StudentApplyModal } from '@/components/StudentApplyModal';
+import { TeacherPostCardModal } from '@/components/TeacherPostCardModal';
+import { StaffPostModal } from '@/components/StaffPostModal';
 import { ApplicationTrackerView } from '@/components/ApplicationTrackerView';
 import { TeacherCurationView } from '@/components/TeacherCurationView';
-import { Compass, RefreshCw, X } from 'lucide-react';
+import {
+  Compass,
+  RefreshCw,
+  X,
+  GraduationCap,
+  Users,
+  ShieldCheck,
+  Plus,
+  ArrowRight,
+  UserCheck,
+} from 'lucide-react';
 
 export default function HomePage() {
   const [currentView, setCurrentView] = useState<'opportunities' | 'tracker' | 'curation'>('opportunities');
   const [activeRole, setActiveRole] = useState<UserRole>('student');
   const [language, setLanguage] = useState<Language>('en');
   const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Modals state
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
+  const [targetApplyOpportunity, setTargetApplyOpportunity] = useState<Opportunity | null>(null);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [showTeacherCardModal, setShowTeacherCardModal] = useState(false);
+  const [showStaffPostModal, setShowStaffPostModal] = useState(false);
 
   // Filters state
   const [filters, setFilters] = useState<FilterState>({
@@ -50,7 +78,27 @@ export default function HomePage() {
     7: 'interviewing',
   });
 
-  // Load opportunities
+  // Check current session
+  useEffect(() => {
+    const user = getStoredUser();
+    setCurrentUser(user);
+    if (user) {
+      setActiveRole(user.role);
+    }
+  }, []);
+
+  // Fetch applications for current user if logged in
+  useEffect(() => {
+    if (currentUser) {
+      fetchApplications().then(appMap => {
+        if (appMap && Object.keys(appMap).length > 0) {
+          setTrackers(prev => ({ ...prev, ...appMap }));
+        }
+      });
+    }
+  }, [currentUser]);
+
+  // Load opportunities from backend
   const loadOpportunities = useCallback(async (showToast = false) => {
     setLoading(true);
     try {
@@ -91,6 +139,39 @@ export default function HomePage() {
       ...prev,
       [id]: status,
     }));
+    updateApplicationTracker(id, status);
+  };
+
+  // Initiate Student Apply Flow
+  const handleInitiateApply = (opp: Opportunity) => {
+    const user = currentUser || getStoredUser();
+    if (!user) {
+      setTargetApplyOpportunity(opp);
+      setShowAuthPrompt(true);
+      return;
+    }
+
+    if (user.role === 'student' || user.role === 'public') {
+      setTargetApplyOpportunity(opp);
+      setShowApplyModal(true);
+    } else {
+      toast.info(`Signed in as ${user.role.toUpperCase()}`, {
+        description: 'Applications are reserved for student accounts. You can create or manage cards in your Dashboard.',
+      });
+    }
+  };
+
+  // Handle successful application submit
+  const handleApplicationSubmitted = (opportunityId: number) => {
+    setTrackers(prev => ({
+      ...prev,
+      [opportunityId]: 'applied',
+    }));
+  };
+
+  // Handle card created by teacher or staff
+  const handleCardCreated = (newOpp: Opportunity) => {
+    setOpportunities(prev => [newOpp, ...prev]);
   };
 
   const handleResetFilters = () => {
@@ -117,13 +198,21 @@ export default function HomePage() {
 
   const categoryCounts = useMemo(() => {
     return {
-      all: fallbackOpportunities.length,
-      job: fallbackOpportunities.filter(o => o.category === 'job').length,
-      internship: fallbackOpportunities.filter(o => o.category === 'internship').length,
-      scholarship: fallbackOpportunities.filter(o => o.category === 'scholarship').length,
-      upskilling: fallbackOpportunities.filter(o => o.category === 'upskilling').length,
+      all: opportunities.length,
+      job: opportunities.filter(o => o.category === 'job').length,
+      internship: opportunities.filter(o => o.category === 'internship').length,
+      scholarship: opportunities.filter(o => o.category === 'scholarship').length,
+      upskilling: opportunities.filter(o => o.category === 'upskilling').length,
+      school_work: opportunities.filter(o => o.category === 'school_work').length,
     };
-  }, []);
+  }, [opportunities]);
+
+  const scrollToCatalog = () => {
+    const el = document.getElementById('work-catalog');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
@@ -173,8 +262,9 @@ export default function HomePage() {
             />
           </motion.div>
         ) : (
-          /* Default Opportunities Explore Catalog View */
+          /* Default Client Catalog View */
           <main key="opportunities" className="flex-1">
+            {/* 1. Hero Section */}
             <HeroSection
               searchQuery={filters.searchQuery}
               setSearchQuery={(q) => setFilters(prev => ({ ...prev, searchQuery: q }))}
@@ -188,7 +278,137 @@ export default function HomePage() {
               onSearchSubmit={() => loadOpportunities(true)}
             />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* 2. Customized Role Ecosystem Section (Requested by User) */}
+            <RolePathwaysSection
+              currentUser={currentUser}
+              language={language}
+              onOpenTeacherPostModal={() => setShowTeacherCardModal(true)}
+              onOpenStaffPostModal={() => setShowStaffPostModal(true)}
+              onScrollToCatalog={scrollToCatalog}
+            />
+
+            {/* 3. Interactive Role Status & Action Banner */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-4">
+              <div className="p-4 rounded-3xl bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-violet-600/10 border border-blue-200/80 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center space-x-3 text-xs">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold shrink-0 shadow-sm">
+                    {currentUser ? (
+                      currentUser.role === 'teacher' ? (
+                        <Users className="w-5 h-5" />
+                      ) : currentUser.role === 'staff' ? (
+                        <ShieldCheck className="w-5 h-5" />
+                      ) : (
+                        <GraduationCap className="w-5 h-5" />
+                      )
+                    ) : (
+                      <GraduationCap className="w-5 h-5" />
+                    )}
+                  </div>
+                  <div>
+                    {currentUser ? (
+                      <div>
+                        <p className="font-extrabold text-slate-900 text-sm">
+                          {currentUser.role === 'student' && `Logged in as Student: ${currentUser.full_name}`}
+                          {currentUser.role === 'teacher' && `Teacher Privileges: ${currentUser.full_name}`}
+                          {currentUser.role === 'staff' && `Career Staff Privileges: ${currentUser.full_name}`}
+                          {currentUser.role === 'admin' && `System Administrator: ${currentUser.full_name}`}
+                        </p>
+                        <p className="text-[11px] text-slate-600">
+                          {currentUser.role === 'student' &&
+                            'Browse below, select any card to apply directly, and monitor your milestones in My Applications.'}
+                          {currentUser.role === 'teacher' &&
+                            'You have access to create school work cards and manage class collections from your dashboard.'}
+                          {currentUser.role === 'staff' &&
+                            'You can publish verified institutional opportunities and monitor live student engagement metrics.'}
+                          {currentUser.role === 'admin' &&
+                            'Full administrative control over scrapers, sources, and user privileges.'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="font-extrabold text-slate-900 text-sm">
+                          {language === 'km' ? 'សិស្សចង់ដាក់ពាក្យស្នើសុំ?' : 'Students: Looking to Apply for Work or Jobs?'}
+                        </p>
+                        <p className="text-[11px] text-slate-600">
+                          {language === 'km'
+                            ? 'សូមបង្កើតគណនីជាសិស្ស (Student) ដើម្បីជ្រើសរើសកាតការងារ ឬកិច្ចការសាលា ហើយដាក់ពាក្យស្នើសុំភ្លាមៗ។'
+                            : 'Students must register to create an account and select a card to apply. Teachers and staff can create listings in their dashboards.'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2 shrink-0">
+                  {currentUser ? (
+                    currentUser.role === 'teacher' ? (
+                      <>
+                        <button
+                          onClick={() => setShowTeacherCardModal(true)}
+                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-bold shadow-sm flex items-center space-x-1.5 transition-all"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Create School Work Card</span>
+                        </button>
+                        <Link
+                          href="/teacher"
+                          className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl text-xs font-bold transition-colors"
+                        >
+                          Teacher Dashboard
+                        </Link>
+                      </>
+                    ) : currentUser.role === 'staff' ? (
+                      <>
+                        <button
+                          onClick={() => setShowStaffPostModal(true)}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold shadow-sm flex items-center space-x-1.5 transition-all"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Post Verified Opportunity</span>
+                        </button>
+                        <Link
+                          href="/staff"
+                          className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl text-xs font-bold transition-colors"
+                        >
+                          Staff Dashboard
+                        </Link>
+                      </>
+                    ) : (
+                      <button
+                        onClick={scrollToCatalog}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold shadow-sm transition-all flex items-center space-x-1"
+                      >
+                        <span>Select Cards Below</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    )
+                  ) : (
+                    <>
+                      <Link
+                        href="/login?mode=register&role=student"
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl text-xs font-bold shadow-sm flex items-center space-x-1.5 transition-all"
+                      >
+                        <UserCheck className="w-3.5 h-3.5" />
+                        <span>Register as Student</span>
+                      </Link>
+                      <button
+                        onClick={() => {
+                          const opp = opportunities[0];
+                          setTargetApplyOpportunity(opp);
+                          setShowAuthPrompt(true);
+                        }}
+                        className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl text-xs font-bold transition-colors"
+                      >
+                        1-Click Student Demo
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Opportunities Catalog & Work List Down */}
+            <div id="work-catalog" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               <div className="flex flex-col lg:flex-row gap-8 items-start">
                 {/* Faceted Filter Sidebar */}
                 <FilterSidebar
@@ -222,7 +442,7 @@ export default function HomePage() {
 
                       {filters.category !== 'all' && (
                         <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-slate-200/80 text-slate-800 text-[11px] font-bold capitalize">
-                          <span>{filters.category}</span>
+                          <span>{filters.category.replace('_', ' ')}</span>
                           <button
                             onClick={() => setFilters(prev => ({ ...prev, category: 'all' }))}
                             className="hover:text-slate-950"
@@ -289,10 +509,12 @@ export default function HomePage() {
                           opportunity={opp}
                           onSelect={setSelectedOpportunity}
                           onToggleBookmark={handleToggleBookmark}
-                          onTrack={(opp) => {
-                            handleUpdateStatus(opp.id, 'saved');
+                          onTrack={(o) => {
+                            handleUpdateStatus(o.id, 'saved');
                             setCurrentView('tracker');
                           }}
+                          onApply={handleInitiateApply}
+                          isApplied={trackers[opp.id] === 'applied'}
                         />
                       ))}
                     </div>
@@ -311,6 +533,45 @@ export default function HomePage() {
         onToggleBookmark={handleToggleBookmark}
         onUpdateStatus={handleUpdateStatus}
         currentStatus={selectedOpportunity ? trackers[selectedOpportunity.id] : 'saved'}
+        onApply={handleInitiateApply}
+        isApplied={selectedOpportunity ? trackers[selectedOpportunity.id] === 'applied' : false}
+      />
+
+      {/* Auth Prompt Modal (For Unauthenticated Users) */}
+      <AuthPromptModal
+        isOpen={showAuthPrompt}
+        onClose={() => setShowAuthPrompt(false)}
+        opportunity={targetApplyOpportunity}
+        onLoggedIn={(user) => {
+          setCurrentUser(user);
+          setActiveRole(user.role);
+          if (targetApplyOpportunity) {
+            setShowApplyModal(true);
+          }
+        }}
+      />
+
+      {/* Student Direct Application Modal */}
+      <StudentApplyModal
+        isOpen={showApplyModal}
+        onClose={() => setShowApplyModal(false)}
+        opportunity={targetApplyOpportunity}
+        currentUser={currentUser}
+        onApplicationSubmitted={handleApplicationSubmitted}
+      />
+
+      {/* Teacher Opportunity / School Work Modal */}
+      <TeacherPostCardModal
+        isOpen={showTeacherCardModal}
+        onClose={() => setShowTeacherCardModal(false)}
+        onCardCreated={handleCardCreated}
+      />
+
+      {/* Staff Opportunity Modal */}
+      <StaffPostModal
+        isOpen={showStaffPostModal}
+        onClose={() => setShowStaffPostModal(false)}
+        onAddOpportunity={handleCardCreated}
       />
 
       {/* Footer */}

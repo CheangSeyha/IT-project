@@ -9,6 +9,7 @@ class OpportunityCategory(str, enum.Enum):
     INTERNSHIP = "internship"
     UPSKILLING = "upskilling"
     SCHOLARSHIP = "scholarship"
+    SCHOOL_WORK = "school_work"
 
 
 class LocationType(str, enum.Enum):

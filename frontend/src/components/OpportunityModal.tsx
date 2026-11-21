@@ -24,6 +24,8 @@ interface OpportunityModalProps {
   onToggleBookmark: (id: number) => void;
   onUpdateStatus: (opportunityId: number, status: ApplicationStatus) => void;
   currentStatus?: ApplicationStatus;
+  onApply?: (opp: Opportunity) => void;
+  isApplied?: boolean;
 }
 
 export const OpportunityModal: React.FC<OpportunityModalProps> = ({
@@ -32,6 +34,8 @@ export const OpportunityModal: React.FC<OpportunityModalProps> = ({
   onToggleBookmark,
   onUpdateStatus,
   currentStatus = 'saved',
+  onApply,
+  isApplied = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'requirements' | 'funding' | 'match'>('overview');
   const [copied, setCopied] = useState(false);
@@ -374,15 +378,33 @@ export const OpportunityModal: React.FC<OpportunityModalProps> = ({
               </button>
             </div>
 
-            <a
-              href={opportunity.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-5 py-2 text-xs font-bold rounded-2xl bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20 flex items-center space-x-1.5 transition-all"
-            >
-              <span>Open Official Application Portal</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            <div className="flex items-center space-x-2">
+              {isApplied ? (
+                <span className="px-4 py-2 text-xs font-bold rounded-2xl bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center space-x-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>Applied as Student</span>
+                </span>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (onApply) onApply(opportunity);
+                  }}
+                  className="px-5 py-2 text-xs font-bold rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-500/20 flex items-center space-x-1.5 transition-all"
+                >
+                  <span>Apply as Student</span>
+                </button>
+              )}
+
+              <a
+                href={opportunity.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 text-xs font-semibold rounded-2xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 flex items-center space-x-1.5 transition-all"
+              >
+                <span>External Portal</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
           </div>
         </motion.div>
       </div>

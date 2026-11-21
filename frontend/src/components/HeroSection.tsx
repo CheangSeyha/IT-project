@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Zap,
   Globe2,
+  BookOpen,
 } from 'lucide-react';
 
 interface HeroSectionProps {
@@ -124,6 +125,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       icon: Sparkles,
       color: 'text-emerald-600',
       count: categoryCounts?.upskilling,
+    },
+    {
+      id: 'school_work' as const,
+      label: language === 'km' ? 'កិច្ចការសាលា' : 'School Work & Research',
+      icon: BookOpen,
+      color: 'text-indigo-600',
+      count: categoryCounts?.school_work,
     },
   ];
 

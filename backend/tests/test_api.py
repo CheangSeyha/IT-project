@@ -1,6 +1,12 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
 from app.main import app
+from app.core.database import init_db
+
+
+@pytest.fixture(autouse=True)
+async def initialize_database():
+    await init_db()
 
 
 @pytest.mark.asyncio
