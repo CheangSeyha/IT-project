@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Opportunity, ApplicationStatus, UserRole, FilterState, NotificationItem, Language } from '@/types';
-import { fetchOpportunities, fallbackOpportunities, fallbackNotifications } from '@/services/api';
+import { Opportunity, ApplicationStatus, UserRole, FilterState, Language } from '@/types';
+import { fetchOpportunities, fallbackOpportunities } from '@/services/api';
 import { Navbar } from '@/components/Navbar';
 import { HeroSection } from '@/components/HeroSection';
 import { FilterSidebar } from '@/components/FilterSidebar';
@@ -12,7 +12,6 @@ import { OpportunityCard } from '@/components/OpportunityCard';
 import { OpportunityModal } from '@/components/OpportunityModal';
 import { ApplicationTrackerView } from '@/components/ApplicationTrackerView';
 import { TeacherCurationView } from '@/components/TeacherCurationView';
-import { AlertSettingsModal } from '@/components/AlertSettingsModal';
 import { Compass, RefreshCw, X } from 'lucide-react';
 
 export default function HomePage() {
@@ -21,11 +20,7 @@ export default function HomePage() {
   const [language, setLanguage] = useState<Language>('en');
   const [loading, setLoading] = useState(false);
 
-  // Notifications state
-  const [notifications, setNotifications] = useState<NotificationItem[]>(fallbackNotifications);
-
   // Modals state
-  const [showAlertSettings, setShowAlertSettings] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
 
   // Filters state
@@ -98,12 +93,6 @@ export default function HomePage() {
     }));
   };
 
-  // Mark all notifications read
-  const handleMarkAllNotificationsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    toast.success('All notifications marked as read');
-  };
-
   const handleResetFilters = () => {
     setFilters({
       searchQuery: '',
@@ -126,6 +115,16 @@ export default function HomePage() {
     return opportunities.filter(o => o.is_bookmarked).length;
   }, [opportunities]);
 
+  const categoryCounts = useMemo(() => {
+    return {
+      all: fallbackOpportunities.length,
+      job: fallbackOpportunities.filter(o => o.category === 'job').length,
+      internship: fallbackOpportunities.filter(o => o.category === 'internship').length,
+      scholarship: fallbackOpportunities.filter(o => o.category === 'scholarship').length,
+      upskilling: fallbackOpportunities.filter(o => o.category === 'upskilling').length,
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
       {/* Top Navbar */}
@@ -137,9 +136,6 @@ export default function HomePage() {
         bookmarkCount={bookmarkCount}
         locationScope={filters.locationType}
         setLocationScope={(scope) => setFilters(prev => ({ ...prev, locationType: scope }))}
-        notifications={notifications}
-        onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
-        onOpenAlertSettings={() => setShowAlertSettings(true)}
         language={language}
         setLanguage={setLanguage}
       />
@@ -178,14 +174,7 @@ export default function HomePage() {
           </motion.div>
         ) : (
           /* Default Opportunities Explore Catalog View */
-          <motion.main
-            key="opportunities"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="flex-1"
-          >
+          <main key="opportunities" className="flex-1">
             <HeroSection
               searchQuery={filters.searchQuery}
               setSearchQuery={(q) => setFilters(prev => ({ ...prev, searchQuery: q }))}
@@ -194,7 +183,9 @@ export default function HomePage() {
               locationScope={filters.locationType}
               setLocationScope={(scope) => setFilters(prev => ({ ...prev, locationType: scope }))}
               totalCount={opportunities.length}
+              categoryCounts={categoryCounts}
               language={language}
+              onSearchSubmit={() => loadOpportunities(true)}
             />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -309,7 +300,7 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-          </motion.main>
+          </main>
         )}
       </AnimatePresence>
 
@@ -320,12 +311,6 @@ export default function HomePage() {
         onToggleBookmark={handleToggleBookmark}
         onUpdateStatus={handleUpdateStatus}
         currentStatus={selectedOpportunity ? trackers[selectedOpportunity.id] : 'saved'}
-      />
-
-      {/* Alert Settings Modal */}
-      <AlertSettingsModal
-        isOpen={showAlertSettings}
-        onClose={() => setShowAlertSettings(false)}
       />
 
       {/* Footer */}

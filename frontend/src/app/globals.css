@@ -36,6 +36,19 @@ body {
   background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 75%);
 }
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-150%);
+  }
+  50%, 100% {
+    transform: translateX(150%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 3.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

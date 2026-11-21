@@ -20,12 +20,25 @@ import {
   Check,
   MapPin,
   Globe,
+  Bell,
+  SlidersHorizontal,
+  Users,
 } from 'lucide-react';
-import { ScraperSource, ScraperLog, Opportunity } from '@/types';
-import { fallbackScraperSources, fallbackScraperLogs, fallbackOpportunities } from '@/services/api';
+import { toast } from 'sonner';
+import { ScraperSource, ScraperLog, Opportunity, NotificationItem, User, UserRole } from '@/types';
+import {
+  fallbackScraperSources,
+  fallbackScraperLogs,
+  fallbackOpportunities,
+  fallbackNotifications,
+  fallbackUsers,
+  updateUserRole,
+} from '@/services/api';
 import { AddSourceModal } from '@/components/AddSourceModal';
+import { NotificationDropdown } from '@/components/NotificationDropdown';
+import { AlertSettingsModal } from '@/components/AlertSettingsModal';
 
-type AdminTab = 'overview' | 'crawlers' | 'moderation' | 'analytics' | 'logs';
+type AdminTab = 'overview' | 'crawlers' | 'moderation' | 'users' | 'analytics' | 'logs';
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
@@ -36,6 +49,38 @@ export default function AdminPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [moderationFilter, setModerationFilter] = useState<'all' | 'verified' | 'pending'>('all');
   const [searchCrawler, setSearchCrawler] = useState('');
+  const [notifications, setNotifications] = useState<NotificationItem[]>(fallbackNotifications);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showAlertSettings, setShowAlertSettings] = useState(false);
+  const [usersList, setUsersList] = useState<User[]>(fallbackUsers);
+  const [searchUser, setSearchUser] = useState('');
+  const [roleFilter, setRoleFilter] = useState<'all' | UserRole>('all');
+
+  const handleRoleChange = async (userId: number, newRole: UserRole) => {
+    try {
+      await updateUserRole(userId, newRole);
+      setUsersList(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      toast.success('User role updated successfully', {
+        description: `User role changed to ${newRole.toUpperCase()}`,
+      });
+    } catch {
+      toast.error('Failed to update user role');
+    }
+  };
+
+  const filteredUsers = usersList.filter(u => {
+    const matchesRole = roleFilter === 'all' || u.role === roleFilter;
+    const matchesSearch =
+      u.full_name.toLowerCase().includes(searchUser.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchUser.toLowerCase());
+    return matchesRole && matchesSearch;
+  });
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleMarkAllNotificationsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
 
   // Trigger individual scraper
   const handleTriggerScraper = (id: number) => {
@@ -155,6 +200,18 @@ export default function AdminPage() {
             </button>
 
             <button
+              onClick={() => setActiveTab('users')}
+              className={`w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl transition-all ${
+                activeTab === 'users'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>User Roles & RBAC</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('analytics')}
               className={`w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl transition-all ${
                 activeTab === 'analytics'
@@ -211,10 +268,46 @@ export default function AdminPage() {
             </h2>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold">
+          <div className="flex items-center space-x-2.5">
+            <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-xl text-xs font-semibold shadow-2xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>5 Spiders Healthy</span>
+            </div>
+
+            {/* Ingestion & Alert Rules Settings Button */}
+            <button
+              onClick={() => setShowAlertSettings(true)}
+              className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/80 rounded-xl text-xs font-semibold flex items-center space-x-1.5 shadow-2xs transition-all cursor-pointer"
+              title="Update Alert & Ingestion Rules"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-600" />
+              <span className="hidden md:inline text-xs">Update Rules</span>
+            </button>
+
+            {/* Notification Bell with Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/80 rounded-xl text-xs font-semibold flex items-center space-x-1.5 shadow-2xs transition-all relative cursor-pointer"
+                title="System Pipeline & Ingestion Alerts"
+              >
+                <Bell className="w-3.5 h-3.5 text-slate-600" />
+                <span className="hidden md:inline text-xs">Alerts</span>
+                {unreadCount > 0 && (
+                  <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse ml-0.5" />
+                )}
+              </button>
+
+              <NotificationDropdown
+                notifications={notifications}
+                isOpen={showNotifications}
+                onClose={() => setShowNotifications(false)}
+                onMarkAllAsRead={handleMarkAllNotificationsRead}
+                onSelectNotification={() => {
+                  setShowNotifications(false);
+                  setActiveTab('logs');
+                }}
+              />
             </div>
 
             {activeTab === 'crawlers' && (
@@ -475,6 +568,110 @@ export default function AdminPage() {
             </div>
           )}
 
+          {/* TAB 4: USERS & RBAC ROLES */}
+          {activeTab === 'users' && (
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden space-y-4">
+              <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center space-x-2 w-full sm:w-72 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs">
+                  <Search className="w-3.5 h-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search users by name or email..."
+                    value={searchUser}
+                    onChange={(e) => setSearchUser(e.target.value)}
+                    className="bg-transparent text-slate-800 focus:outline-none w-full"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-slate-500 font-semibold">Filter Role:</span>
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value as 'all' | UserRole)}
+                    className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 font-semibold focus:outline-none capitalize"
+                  >
+                    <option value="all">All Roles ({usersList.length})</option>
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher</option>
+                    <option value="staff">Staff / Career Officer</option>
+                    <option value="admin">Admin</option>
+                    <option value="public">Public</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Users Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-100">
+                    <tr>
+                      <th className="p-4">User</th>
+                      <th className="p-4">Academic / Field</th>
+                      <th className="p-4">Current Role</th>
+                      <th className="p-4">Change RBAC Role</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                    {filteredUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="p-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+                              {user.full_name.charAt(0)}
+                            </div>
+                            <div>
+                              <span className="font-bold text-slate-900 block">{user.full_name}</span>
+                              <span className="text-slate-400 text-[11px] block">{user.email}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <span className="text-slate-800 font-semibold block">{user.field_of_study || 'General'}</span>
+                          <span className="text-slate-400 text-[11px] block">{user.education_level || 'Member'}</span>
+                        </td>
+                        <td className="p-4">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center space-x-1 ${
+                              user.role === 'admin'
+                                ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                : user.role === 'staff'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                : user.role === 'teacher'
+                                ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                                : 'bg-blue-100 text-blue-800 border border-blue-200'
+                            }`}
+                          >
+                            <span>{user.role}</span>
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <select
+                            value={user.role}
+                            onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
+                            className="bg-white border border-slate-200 hover:border-blue-500 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 font-bold focus:outline-none shadow-2xs cursor-pointer capitalize transition-colors"
+                          >
+                            <option value="student">Student</option>
+                            <option value="teacher">Teacher</option>
+                            <option value="staff">Staff</option>
+                            <option value="admin">Admin</option>
+                            <option value="public">Public</option>
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredUsers.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-slate-400">
+                          No users matched your search criteria.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* TAB 4: ANALYTICS */}
           {activeTab === 'analytics' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -589,6 +786,12 @@ export default function AdminPage() {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onAddSource={handleAddSource}
+      />
+
+      {/* Ingestion & Alert Rule Settings Modal */}
+      <AlertSettingsModal
+        isOpen={showAlertSettings}
+        onClose={() => setShowAlertSettings(false)}
       />
     </div>
   );

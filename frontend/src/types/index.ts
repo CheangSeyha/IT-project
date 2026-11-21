@@ -5,6 +5,23 @@ export type ApplicationStatus = 'saved' | 'preparing' | 'applied' | 'interviewin
 export type UserRole = 'public' | 'student' | 'teacher' | 'staff' | 'admin';
 export type Language = 'en' | 'km';
 
+export interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  role: UserRole;
+  field_of_study?: string;
+  education_level?: string;
+  skills?: string;
+  created_at?: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
+}
+
 export interface Opportunity {
   id: number;
   title: string;
@@ -104,4 +121,22 @@ export interface FilterState {
   closingSoonOnly: boolean;
   verifiedOnly: boolean;
   highMatchOnly: boolean;
+}
+
+export interface StaffAnalyticsData {
+  opportunity_views: number;
+  student_bookmarks: number;
+  applications_started: number;
+  verified_postings: number;
+  top_keywords: { keyword: string; count: number; growth: string }[];
+  category_distribution: Record<string, number>;
+}
+
+export interface AlertSettings {
+  frequency: 'instant' | 'daily' | 'weekly';
+  email_enabled: boolean;
+  telegram_enabled: boolean;
+  deadline_alerts: boolean;
+  scholarship_alerts: boolean;
+  job_alerts: boolean;
 }

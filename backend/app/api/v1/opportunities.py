@@ -124,10 +124,10 @@ async def get_opportunity(
 async def create_opportunity(
     opp_in: OpportunityCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.STAFF, UserRole.ADMIN])),
+    current_user: User = Depends(require_role([UserRole.TEACHER, UserRole.STAFF, UserRole.ADMIN])),
 ):
     new_opp = Opportunity(**opp_in.dict())
-    if current_user.role in [UserRole.STAFF, UserRole.ADMIN]:
+    if current_user.role in [UserRole.TEACHER, UserRole.STAFF, UserRole.ADMIN]:
         new_opp.is_verified = True
     db.add(new_opp)
     await db.commit()

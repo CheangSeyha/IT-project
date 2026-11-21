@@ -1,6 +1,51 @@
-import { Opportunity, ScraperSource, ScraperLog, FilterState, NotificationItem, CuratedCollection } from '@/types';
+import {
+  Opportunity,
+  ScraperSource,
+  ScraperLog,
+  FilterState,
+  NotificationItem,
+  CuratedCollection,
+  User,
+  AuthResponse,
+  AlertSettings,
+  StaffAnalyticsData,
+  UserRole,
+} from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
+export const fallbackUsers: User[] = [
+  {
+    id: 1,
+    email: 'student@opphub.kh',
+    full_name: 'Sokha Chan',
+    role: 'student',
+    field_of_study: 'Computer Science & Engineering',
+    education_level: 'Bachelor Year 4',
+    skills: 'Python, React, TypeScript, SQL',
+  },
+  {
+    id: 2,
+    email: 'teacher@opphub.kh',
+    full_name: 'Prof. David Kim',
+    role: 'teacher',
+    field_of_study: 'Information Technology',
+    education_level: 'Doctorate',
+  },
+  {
+    id: 3,
+    email: 'staff@opphub.kh',
+    full_name: 'Bopha Chea',
+    role: 'staff',
+    field_of_study: 'University Career Center',
+  },
+  {
+    id: 4,
+    email: 'admin@opphub.kh',
+    full_name: 'System Administrator',
+    role: 'admin',
+  },
+];
 
 export const fallbackOpportunities: Opportunity[] = [
   {
@@ -502,4 +547,348 @@ export async function fetchOpportunities(filters?: FilterState): Promise<{ items
   }
 
   return { items: filtered, total: filtered.length };
+}
+
+export async function loginUser(email: string, password: string):Promise<AuthResponse> {
+  try {
+    const formData = new URLSearchParams();
+    formData.append('username', email);
+    formData.append('password', password);
+
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+      },
+      body: formData.toString(),
+    });
+
+    if (response.ok) {
+      const data: AuthResponse = await response.json();
+      saveAuthSession(data.access_token, data.user);
+      return data;
+    }
+  } catch (err) {
+    console.warn("Backend login failed or unreachable, checking fallback accounts", err);
+  }
+
+  // Fallback local authentication
+  const matched = fallbackUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+  if (matched && password === 'password123') {
+    const mockAuth: AuthResponse = {
+      access_token: `mock_jwt_token_${matched.role}_${Date.now()}`,
+      token_type: 'bearer',
+      user: matched,
+    };
+    saveAuthSession(mockAuth.access_token, mockAuth.user);
+    return mockAuth;
+  }
+
+  // If user entered any other email with matching demo format
+  if (email && password) {
+    const guestUser: User = {
+      id: Math.floor(Math.random() * 9000) + 1000,
+      email: email,
+      full_name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      role: email.includes('admin') ? 'admin' : email.includes('teacher') ? 'teacher' : email.includes('staff') ? 'staff' : 'student',
+    };
+    const mockAuth: AuthResponse = {
+      access_token: `mock_jwt_token_${guestUser.role}_${Date.now()}`,
+      token_type: 'bearer',
+      user: guestUser,
+    };
+    saveAuthSession(mockAuth.access_token, mockAuth.user);
+    return mockAuth;
+  }
+
+  throw new Error('Invalid email or password');
+}
+
+export async function registerUser(userData: {
+  email: string;
+  password: string;
+  full_name: string;
+  role: 'student' | 'teacher' | 'staff' | 'public';
+  field_of_study?: string;
+  education_level?: string;
+  skills?: string;
+}): Promise<User> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (response.ok) {
+      const user: User = await response.json();
+      return user;
+    }
+  } catch (err) {
+    console.warn("Backend register failed or unreachable, saving mock registration", err);
+  }
+
+  const newUser: User = {
+    id: Math.floor(Math.random() * 9000) + 1000,
+    email: userData.email,
+    full_name: userData.full_name,
+    role: userData.role,
+    field_of_study: userData.field_of_study,
+    education_level: userData.education_level,
+    skills: userData.skills,
+    created_at: new Date().toISOString(),
+  };
+
+  saveAuthSession(`mock_jwt_token_${newUser.role}_${Date.now()}`, newUser);
+  return newUser;
+}
+
+export function saveAuthSession(token: string, user: User) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('opphub_token', token);
+    localStorage.setItem('opphub_user', JSON.stringify(user));
+  }
+}
+
+export function getStoredUser(): User | null {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('opphub_user');
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (e) {
+        console.error("Failed to parse stored user", e);
+      }
+    }
+  }
+  return null;
+}
+
+export function logoutUser() {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('opphub_token');
+    localStorage.removeItem('opphub_user');
+  }
+}
+
+export function getStoredToken(): string | null {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('opphub_token');
+  }
+  return null;
+}
+
+export async function updateUserProfile(profileData: Partial<User>): Promise<User> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(profileData),
+      });
+      if (res.ok) {
+        const updated: User = await res.json();
+        saveAuthSession(token, updated);
+        return updated;
+      }
+    } catch (e) {
+      console.warn("Backend updateUserProfile error, using fallback update", e);
+    }
+  }
+  const current = getStoredUser() || fallbackUsers[0];
+  const merged: User = { ...current, ...profileData };
+  saveAuthSession(token || 'mock_token', merged);
+  return merged;
+}
+
+export async function fetchAlertSettings(): Promise<AlertSettings> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/alert-settings`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) return await res.json();
+    } catch {}
+  }
+  return {
+    frequency: 'daily',
+    email_enabled: true,
+    telegram_enabled: true,
+    deadline_alerts: true,
+    scholarship_alerts: true,
+    job_alerts: true,
+  };
+}
+
+export async function updateAlertSettings(settings: AlertSettings): Promise<void> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      await fetch(`${API_BASE_URL}/auth/alert-settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(settings),
+      });
+    } catch {}
+  }
+}
+
+export async function fetchAdminUsers(role?: string, query?: string): Promise<User[]> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      const params = new URLSearchParams();
+      if (role && role !== 'all') params.append('role', role);
+      if (query) params.append('q', query);
+      const res = await fetch(`${API_BASE_URL}/auth/users?${params.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) return await res.json();
+    } catch {}
+  }
+  // Fallback
+  let users = [...fallbackUsers];
+  if (role && role !== 'all') users = users.filter(u => u.role === role);
+  if (query) {
+    users = users.filter(
+      u =>
+        u.full_name.toLowerCase().includes(query.toLowerCase()) ||
+        u.email.toLowerCase().includes(query.toLowerCase())
+    );
+  }
+  return users;
+}
+
+export async function updateUserRole(userId: number, newRole: UserRole): Promise<User> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/users/${userId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ role: newRole }),
+      });
+      if (res.ok) return await res.json();
+    } catch {}
+  }
+  const user = fallbackUsers.find(u => u.id === userId);
+  if (user) user.role = newRole;
+  return user || { id: userId, email: '', full_name: '', role: newRole };
+}
+
+export async function fetchStaffAnalytics(): Promise<StaffAnalyticsData> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/tracking/analytics`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) return await res.json();
+    } catch {}
+  }
+  return {
+    opportunity_views: 14890,
+    student_bookmarks: 2410,
+    applications_started: 1120,
+    verified_postings: 38,
+    top_keywords: [
+      { keyword: 'Python / FastAPI', count: 482, growth: '+28%' },
+      { keyword: 'Flutter Mobile', count: 351, growth: '+15%' },
+      { keyword: 'Fully Funded Scholarship', count: 520, growth: '+34%' },
+      { keyword: 'Phnom Penh Internship', count: 390, growth: '+19%' },
+      { keyword: 'CADT AI Bootcamp', count: 284, growth: '+42%' },
+    ],
+    category_distribution: {
+      scholarship: 41,
+      job: 32,
+      internship: 18,
+      upskilling: 9,
+    }
+  };
+}
+
+export async function createOpportunity(oppData: Partial<Opportunity>): Promise<Opportunity> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/opportunities`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(oppData),
+      });
+      if (res.ok) return await res.json();
+    } catch {}
+  }
+  const newOpp: Opportunity = {
+    id: Date.now(),
+    title: oppData.title || 'Untitled Opportunity',
+    organization: oppData.organization || 'Organization',
+    category: oppData.category || 'job',
+    location_type: oppData.location_type || 'local',
+    country: oppData.country || 'Cambodia',
+    province_city: oppData.province_city,
+    work_format: oppData.work_format || 'on_site',
+    description: oppData.description || '',
+    requirements: oppData.requirements,
+    skills: oppData.skills,
+    salary_or_funding: oppData.salary_or_funding,
+    local_benefits: oppData.local_benefits,
+    visa_sponsorship: oppData.visa_sponsorship || false,
+    deadline: oppData.deadline,
+    source_url: oppData.source_url || 'https://opphub.kh/post',
+    source_name: oppData.source_name || 'Verified Hub Posting',
+    is_verified: true,
+    created_at: new Date().toISOString(),
+  };
+  return newOpp;
+}
+
+export async function deleteOpportunity(oppId: number): Promise<void> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      await fetch(`${API_BASE_URL}/opportunities/${oppId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch {}
+  }
+}
+
+export async function deleteCuratedCollection(collectionId: number): Promise<void> {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      await fetch(`${API_BASE_URL}/tracking/curated/${collectionId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch {}
+  }
+}
+
+export async function fetchOpportunityById(id: number): Promise<Opportunity | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/opportunities/${id}`);
+    if (res.ok) return await res.json();
+  } catch {}
+  return fallbackOpportunities.find(o => o.id === id) || null;
 }
