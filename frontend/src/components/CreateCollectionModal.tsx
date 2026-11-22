@@ -19,9 +19,9 @@ export const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
   onAddCollection,
 }) => {
   const [title, setTitle] = useState('');
-  const [targetGroup, setTargetGroup] = useState('Year 4 CS Students');
+  const [targetGroup, setTargetGroup] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedIds, setSelectedIds] = useState<number[]>([1, 6]);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   if (!isOpen) return null;
 

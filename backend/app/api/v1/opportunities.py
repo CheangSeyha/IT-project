@@ -11,6 +11,7 @@ from app.models.opportunity import Opportunity, OpportunityCategory, LocationTyp
 from app.models.tracking import Bookmark
 from app.schemas.opportunity import (
     OpportunityCreate,
+    OpportunityUpdate,
     OpportunityResponse,
     OpportunityListResponse,
 )
@@ -133,6 +134,28 @@ async def create_opportunity(
     await db.commit()
     await db.refresh(new_opp)
     return OpportunityResponse.from_orm(new_opp)
+
+
+@router.put("/{opportunity_id}", response_model=OpportunityResponse)
+async def update_opportunity(
+    opportunity_id: int,
+    opp_in: OpportunityUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.TEACHER, UserRole.STAFF, UserRole.ADMIN])),
+):
+    res = await db.execute(select(Opportunity).where(Opportunity.id == opportunity_id))
+    opp = res.scalars().first()
+    if not opp:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    update_data = opp_in.dict(exclude_unset=True)
+    for field, val in update_data.items():
+        setattr(opp, field, val)
+    opp.updated_at = datetime.utcnow()
+
+    await db.commit()
+    await db.refresh(opp)
+    return OpportunityResponse.from_orm(opp)
 
 
 @router.delete("/{opportunity_id}")

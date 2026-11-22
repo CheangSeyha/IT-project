@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import {
@@ -18,14 +18,14 @@ import {
   Building,
 } from 'lucide-react';
 import { Opportunity } from '@/types';
-import { fallbackOpportunities, fetchOpportunities, createOpportunity, deleteOpportunity } from '@/services/api';
+import { fetchOpportunities, createOpportunity, deleteOpportunity } from '@/services/api';
 import { Navbar } from '@/components/Navbar';
 import { TeacherCurationView } from '@/components/TeacherCurationView';
 import { TeacherPostCardModal } from '@/components/TeacherPostCardModal';
 
 export default function TeacherPage() {
   const [activeTab, setActiveTab] = useState<'cards' | 'collections' | 'events'>('cards');
-  const [opportunities, setOpportunities] = useState<Opportunity[]>(fallbackOpportunities);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showCardModal, setShowCardModal] = useState(false);
 
@@ -38,37 +38,37 @@ export default function TeacherPage() {
   const [targetCohort, setTargetCohort] = useState('Year 3 & Year 4 Students');
   const [registrationLink, setRegistrationLink] = useState('');
 
-  // Academic Events list
-  const [academicEvents, setAcademicEvents] = useState([
-    {
-      id: 101,
-      title: 'AI & Large Language Models in Production Seminar',
-      organizer: 'Prof. David Kim & Google Developer Group',
-      date: 'Next Tuesday, 2:00 PM',
-      venue: 'CADT Innovation Hall & Hybrid Stream',
-      target: 'Year 4 Computer Science Cohort',
-      category: 'upskilling',
-    },
-    {
-      id: 102,
-      title: 'Graduate Scholarship Writing & Proposal Workshop',
-      organizer: 'Academic Affairs & International Office',
-      date: 'Dec 5, 2026, 9:00 AM',
-      venue: 'Room 304, Academic Block',
-      target: 'Graduating Seniors & Alumni',
-      category: 'scholarship',
-    },
-  ]);
-
   useEffect(() => {
     fetchOpportunities()
       .then(res => {
-        if (res && res.items && res.items.length > 0) {
+        if (res && res.items) {
           setOpportunities(res.items);
         }
       })
       .catch(() => {});
   }, []);
+
+  // Academic Events dynamically derived from backend opportunities
+  const academicEvents = useMemo(() => {
+    return opportunities
+      .filter(
+        o =>
+          o.category === 'upskilling' ||
+          o.category === 'school_work' ||
+          o.title.toLowerCase().includes('academic') ||
+          o.title.toLowerCase().includes('seminar') ||
+          o.title.toLowerCase().includes('workshop')
+      )
+      .map(o => ({
+        id: o.id,
+        title: o.title,
+        organizer: o.organization,
+        date: o.deadline ? new Date(o.deadline).toLocaleDateString() : 'Upcoming Session',
+        venue: o.province_city || 'Campus & Online',
+        target: o.field_of_study || 'All Students & Cohorts',
+        category: o.category,
+      }));
+  }, [opportunities]);
 
   const handleCardCreated = (newOpp: Opportunity) => {
     setOpportunities(prev => [newOpp, ...prev]);
@@ -90,18 +90,6 @@ export default function TeacherPage() {
       toast.error('Please enter an event title');
       return;
     }
-
-    const newEvent = {
-      id: Date.now(),
-      title: eventTitle,
-      organizer,
-      date: eventDate || 'Scheduled for Next Month',
-      venue,
-      target: targetCohort,
-      category: 'upskilling',
-    };
-
-    setAcademicEvents(prev => [newEvent, ...prev]);
 
     try {
       const created = await createOpportunity({

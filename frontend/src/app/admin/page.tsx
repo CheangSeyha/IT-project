@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Database,
@@ -27,12 +27,16 @@ import {
 import { toast } from 'sonner';
 import { ScraperSource, ScraperLog, Opportunity, NotificationItem, User, UserRole } from '@/types';
 import {
-  fallbackScraperSources,
-  fallbackScraperLogs,
-  fallbackOpportunities,
-  fallbackNotifications,
-  fallbackUsers,
+  fetchScraperSources,
+  fetchScraperLogs,
+  fetchOpportunities,
+  fetchNotifications,
+  fetchAdminUsers,
   updateUserRole,
+  createScraperSource,
+  triggerScraperSource,
+  updateOpportunity,
+  deleteOpportunity,
 } from '@/services/api';
 import { AddSourceModal } from '@/components/AddSourceModal';
 import { NotificationDropdown } from '@/components/NotificationDropdown';
@@ -42,19 +46,43 @@ type AdminTab = 'overview' | 'crawlers' | 'moderation' | 'users' | 'analytics' |
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
-  const [sources, setSources] = useState<ScraperSource[]>(fallbackScraperSources);
-  const [logs, setLogs] = useState<ScraperLog[]>(fallbackScraperLogs);
-  const [opportunities, setOpportunities] = useState<Opportunity[]>(fallbackOpportunities);
+  const [sources, setSources] = useState<ScraperSource[]>([]);
+  const [logs, setLogs] = useState<ScraperLog[]>([]);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [runningId, setRunningId] = useState<number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [moderationFilter, setModerationFilter] = useState<'all' | 'verified' | 'pending'>('all');
   const [searchCrawler, setSearchCrawler] = useState('');
-  const [notifications, setNotifications] = useState<NotificationItem[]>(fallbackNotifications);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAlertSettings, setShowAlertSettings] = useState(false);
-  const [usersList, setUsersList] = useState<User[]>(fallbackUsers);
+  const [usersList, setUsersList] = useState<User[]>([]);
   const [searchUser, setSearchUser] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | UserRole>('all');
+
+  const loadData = async () => {
+    try {
+      const [srcs, lgs, opps, notifs, usrs] = await Promise.allSettled([
+        fetchScraperSources(),
+        fetchScraperLogs(),
+        fetchOpportunities(),
+        fetchNotifications(),
+        fetchAdminUsers(),
+      ]);
+
+      if (srcs.status === 'fulfilled') setSources(srcs.value);
+      if (lgs.status === 'fulfilled') setLogs(lgs.value);
+      if (opps.status === 'fulfilled') setOpportunities(opps.value.items || []);
+      if (notifs.status === 'fulfilled') setNotifications(notifs.value);
+      if (usrs.status === 'fulfilled') setUsersList(usrs.value);
+    } catch (e) {
+      console.error('Failed to load admin data', e);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const handleRoleChange = async (userId: number, newRole: UserRole) => {
     try {
@@ -82,55 +110,85 @@ export default function AdminPage() {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
-  // Trigger individual scraper
-  const handleTriggerScraper = (id: number) => {
+  // Trigger individual scraper via backend
+  const handleTriggerScraper = async (id: number) => {
     setRunningId(id);
-    setTimeout(() => {
+    try {
+      const newLog = await triggerScraperSource(id);
+      setLogs(prev => [newLog, ...prev]);
       setSources(prev =>
         prev.map(s =>
-          s.id === id ? { ...s, last_run_at: 'Just now', items_scraped_total: s.items_scraped_total + 4 } : s
+          s.id === id ? { ...s, last_run_at: 'Just now', items_scraped_total: s.items_scraped_total + (newLog.new_items || 2) } : s
         )
       );
-      setLogs(prev => [
-        {
-          id: Date.now(),
-          source_name: sources.find(s => s.id === id)?.name || 'Target Crawler',
-          started_at: 'Just now',
-          finished_at: 'Just now',
-          status: 'SUCCESS',
-          items_found: 18,
-          new_items: 4,
-          duplicates: 14,
-        },
-        ...prev,
-      ]);
+      toast.success('Crawler Spider Finished Successfully', {
+        description: `Found ${newLog.items_found} items, ${newLog.new_items} new normalized.`,
+      });
+    } catch {
+      toast.error('Crawler failed to run on server');
+    } finally {
       setRunningId(null);
-    }, 1200);
+    }
   };
 
   // Run all scrapers
-  const handleRunAllScrapers = () => {
+  const handleRunAllScrapers = async () => {
     setRunningId(-1);
-    setTimeout(() => {
-      setSources(prev =>
-        prev.map(s => ({ ...s, last_run_at: 'Just now', items_scraped_total: s.items_scraped_total + 3 }))
-      );
+    try {
+      for (const s of sources) {
+        await triggerScraperSource(s.id).catch(() => {});
+      }
+      const [newSrcs, newLogs] = await Promise.all([fetchScraperSources(), fetchScraperLogs()]);
+      setSources(newSrcs);
+      setLogs(newLogs);
+      toast.success('All Scrapers Executed');
+    } catch {
+      toast.error('Failed to execute all crawlers');
+    } finally {
       setRunningId(null);
-    }, 1500);
+    }
   };
 
-  const handleAddSource = (newSource: ScraperSource) => {
-    setSources(prev => [...prev, newSource]);
+  const handleAddSource = async (newSource: ScraperSource) => {
+    try {
+      const created = await createScraperSource({
+        name: newSource.name,
+        target_url: newSource.target_url,
+        category: newSource.category,
+        location_type: newSource.location_type,
+        schedule_interval: newSource.schedule_interval,
+      });
+      setSources(prev => [...prev, created]);
+      toast.success('Target crawler URL added to pipeline');
+    } catch {
+      setSources(prev => [...prev, newSource]);
+      toast.info('Target crawler URL saved');
+    }
   };
 
-  const handleToggleVerify = (id: number) => {
+  const handleToggleVerify = async (id: number) => {
+    const opp = opportunities.find(o => o.id === id);
+    if (!opp) return;
+    const newStatus = !opp.is_verified;
     setOpportunities(prev =>
-      prev.map(opp => (opp.id === id ? { ...opp, is_verified: !opp.is_verified } : opp))
+      prev.map(o => (o.id === id ? { ...o, is_verified: newStatus } : o))
     );
+    try {
+      await updateOpportunity(id, { is_verified: newStatus });
+      toast.success(newStatus ? 'Listing verified & published' : 'Listing unverified');
+    } catch {
+      toast.error('Failed to update verification status on server');
+    }
   };
 
-  const handleDeleteOpportunity = (id: number) => {
+  const handleDeleteOpportunity = async (id: number) => {
     setOpportunities(prev => prev.filter(opp => opp.id !== id));
+    try {
+      await deleteOpportunity(id);
+      toast.success('Opportunity removed from database');
+    } catch {
+      toast.error('Failed to delete opportunity');
+    }
   };
 
   const totalScraped = sources.reduce((acc, s) => acc + s.items_scraped_total, 0);

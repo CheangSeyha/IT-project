@@ -4,6 +4,14 @@ from pydantic import BaseModel
 from app.models.scraper import ScraperStatus
 
 
+class ScraperSourceCreate(BaseModel):
+    name: str
+    target_url: str
+    category: str
+    location_type: str = "local"
+    schedule_interval: str = "Every 6 hours"
+
+
 class ScraperSourceResponse(BaseModel):
     id: int
     name: str

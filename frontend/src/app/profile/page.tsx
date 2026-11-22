@@ -13,12 +13,11 @@ import {
   ExternalLink,
   Award,
 } from 'lucide-react';
-import { User } from '@/types';
+import { User, Opportunity } from '@/types';
 import {
   getStoredUser,
   updateUserProfile,
-  fallbackOpportunities,
-  fallbackUsers,
+  fetchOpportunities,
 } from '@/services/api';
 import { Navbar } from '@/components/Navbar';
 import { AlertSettingsModal } from '@/components/AlertSettingsModal';
@@ -32,16 +31,25 @@ export default function ProfilePage() {
   const [newSkillInput, setNewSkillInput] = useState('');
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [allOpportunities, setAllOpportunities] = useState<Opportunity[]>([]);
 
   useEffect(() => {
-    const user = getStoredUser() || fallbackUsers[0];
-    setCurrentUser(user);
-    setFullName(user.full_name || '');
-    if (user.field_of_study) setFieldOfStudy(user.field_of_study);
-    if (user.education_level) setEducationLevel(user.education_level);
-    if (user.skills) {
-      setSkillsList(user.skills.split(',').map(s => s.trim()).filter(Boolean));
+    const user = getStoredUser();
+    if (user) {
+      setCurrentUser(user);
+      setFullName(user.full_name || '');
+      if (user.field_of_study) setFieldOfStudy(user.field_of_study);
+      if (user.education_level) setEducationLevel(user.education_level);
+      if (user.skills) {
+        setSkillsList(user.skills.split(',').map(s => s.trim()).filter(Boolean));
+      }
     }
+
+    fetchOpportunities().then(res => {
+      if (res && res.items) {
+        setAllOpportunities(res.items);
+      }
+    }).catch(() => {});
   }, []);
 
   const handleAddSkill = (e: React.FormEvent) => {
@@ -77,8 +85,8 @@ export default function ProfilePage() {
     }
   };
 
-  // Matched opportunities calculation
-  const matchedOpps = fallbackOpportunities
+  // Matched opportunities calculation from real backend opportunities
+  const matchedOpps = allOpportunities
     .map(opp => {
       const oppSkills = (opp.skills || '').toLowerCase();
       const matchedCount = skillsList.filter(s => oppSkills.includes(s.toLowerCase())).length;

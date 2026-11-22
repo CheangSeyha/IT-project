@@ -31,6 +31,29 @@ class OpportunityCreate(OpportunityBase):
     pass
 
 
+class OpportunityUpdate(BaseModel):
+    title: Optional[str] = None
+    organization: Optional[str] = None
+    category: Optional[OpportunityCategory] = None
+    location_type: Optional[LocationType] = None
+    country: Optional[str] = None
+    province_city: Optional[str] = None
+    work_format: Optional[WorkFormat] = None
+    field_of_study: Optional[str] = None
+    education_level: Optional[str] = None
+    description: Optional[str] = None
+    requirements: Optional[str] = None
+    skills: Optional[str] = None
+    salary_or_funding: Optional[str] = None
+    local_benefits: Optional[str] = None
+    visa_sponsorship: Optional[bool] = None
+    language_requirements: Optional[str] = None
+    deadline: Optional[datetime] = None
+    source_url: Optional[str] = None
+    source_name: Optional[str] = None
+    is_verified: Optional[bool] = None
+
+
 class OpportunityResponse(OpportunityBase):
     id: int
     created_at: datetime

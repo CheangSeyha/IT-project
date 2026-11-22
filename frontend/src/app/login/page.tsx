@@ -119,6 +119,7 @@ function LoginContent() {
         field_of_study: registerData.fieldOfStudy,
         education_level: registerData.educationLevel,
       });
+      await loginUser(registerData.email, registerData.password);
       toast.success(`Account created for ${newUser.full_name}!`, {
         description: 'Your profile has been saved. Redirecting to catalog...',
       });

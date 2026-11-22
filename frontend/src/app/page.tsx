@@ -7,10 +7,10 @@ import { toast } from 'sonner';
 import { Opportunity, ApplicationStatus, UserRole, FilterState, Language, User } from '@/types';
 import {
   fetchOpportunities,
-  fallbackOpportunities,
   getStoredUser,
   fetchApplications,
   updateApplicationTracker,
+  toggleBookmarkApi,
 } from '@/services/api';
 import { Navbar } from '@/components/Navbar';
 import { HeroSection } from '@/components/HeroSection';
@@ -68,15 +68,10 @@ export default function HomePage() {
   });
 
   // Opportunities state
-  const [opportunities, setOpportunities] = useState<Opportunity[]>(fallbackOpportunities);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
 
   // Application tracker map (opportunityId -> ApplicationStatus)
-  const [trackers, setTrackers] = useState<Record<number, ApplicationStatus>>({
-    1: 'preparing',
-    3: 'applied',
-    6: 'saved',
-    7: 'interviewing',
-  });
+  const [trackers, setTrackers] = useState<Record<number, ApplicationStatus>>({});
 
   // Check current session
   useEffect(() => {
@@ -91,8 +86,8 @@ export default function HomePage() {
   useEffect(() => {
     if (currentUser) {
       fetchApplications().then(appMap => {
-        if (appMap && Object.keys(appMap).length > 0) {
-          setTrackers(prev => ({ ...prev, ...appMap }));
+        if (appMap) {
+          setTrackers(appMap);
         }
       });
     }
@@ -124,12 +119,22 @@ export default function HomePage() {
   }, [loadOpportunities]);
 
   // Bookmarking handler
-  const handleToggleBookmark = (id: number) => {
+  const handleToggleBookmark = async (id: number) => {
+    const user = currentUser || getStoredUser();
+    if (!user) {
+      setShowAuthPrompt(true);
+      return;
+    }
     setOpportunities(prev =>
       prev.map(item => (item.id === id ? { ...item, is_bookmarked: !item.is_bookmarked } : item))
     );
     if (selectedOpportunity && selectedOpportunity.id === id) {
       setSelectedOpportunity(prev => prev ? { ...prev, is_bookmarked: !prev.is_bookmarked } : null);
+    }
+    try {
+      await toggleBookmarkApi(id);
+    } catch {
+      toast.error('Failed to update bookmark on server');
     }
   };
 

@@ -16,7 +16,7 @@ import {
   FileCheck2,
 } from 'lucide-react';
 import { Opportunity, FilterState } from '@/types';
-import { fallbackOpportunities, fetchOpportunities, deleteOpportunity } from '@/services/api';
+import { fetchOpportunities, deleteOpportunity } from '@/services/api';
 import { Navbar } from '@/components/Navbar';
 import { StaffAnalyticsView } from '@/components/StaffAnalyticsView';
 import { StaffPostModal } from '@/components/StaffPostModal';
@@ -24,9 +24,7 @@ import { StaffPostModal } from '@/components/StaffPostModal';
 export default function StaffPage() {
   const [activeTab, setActiveTab] = useState<'analytics' | 'postings'>('analytics');
   const [showPostModal, setShowPostModal] = useState(false);
-  const [institutionalOpps, setInstitutionalOpps] = useState<Opportunity[]>(
-    fallbackOpportunities.filter(o => o.is_verified)
-  );
+  const [institutionalOpps, setInstitutionalOpps] = useState<Opportunity[]>([]);
 
   useEffect(() => {
     fetchOpportunities({ verifiedOnly: true } as Partial<FilterState> as FilterState)

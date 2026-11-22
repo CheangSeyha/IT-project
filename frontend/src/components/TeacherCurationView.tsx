@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Opportunity, CuratedCollection } from '@/types';
-import { fallbackCuratedCollections } from '@/services/api';
+import { fetchCuratedCollections, createCuratedCollection } from '@/services/api';
 import { CreateCollectionModal } from './CreateCollectionModal';
 import { GraduationCap, Share2, Plus, Users, Check, ArrowUpRight } from 'lucide-react';
 
@@ -17,9 +17,15 @@ export const TeacherCurationView: React.FC<TeacherCurationViewProps> = ({
   opportunities,
   onSelect,
 }) => {
-  const [collections, setCollections] = useState<CuratedCollection[]>(fallbackCuratedCollections);
+  const [collections, setCollections] = useState<CuratedCollection[]>([]);
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  useEffect(() => {
+    fetchCuratedCollections()
+      .then(cols => setCollections(cols))
+      .catch(() => {});
+  }, []);
 
   const handleShare = (col: CuratedCollection) => {
     setCopiedId(col.id);
@@ -29,11 +35,22 @@ export const TeacherCurationView: React.FC<TeacherCurationViewProps> = ({
     setTimeout(() => setCopiedId(null), 2500);
   };
 
-  const handleAddCollection = (newCol: CuratedCollection) => {
-    setCollections(prev => [newCol, ...prev]);
-    toast.success('New Curated Collection published!', {
-      description: newCol.title,
-    });
+  const handleAddCollection = async (newCol: CuratedCollection) => {
+    try {
+      const created = await createCuratedCollection({
+        title: newCol.title,
+        description: newCol.description,
+        opportunity_ids: newCol.opportunityIds,
+        target_group: newCol.targetGroup,
+      });
+      setCollections(prev => [created, ...prev]);
+      toast.success('New Curated Collection published!', {
+        description: created.title,
+      });
+    } catch {
+      setCollections(prev => [newCol, ...prev]);
+      toast.info('Collection added');
+    }
   };
 
   return (

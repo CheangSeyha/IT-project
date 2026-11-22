@@ -127,3 +127,32 @@ async def test_admin_user_management():
         assert users_res.status_code == 200
         users = users_res.json()
         assert len(users) >= 4
+
+
+@pytest.mark.asyncio
+async def test_notifications_and_curated():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        notifs = await client.get("/api/v1/tracking/notifications")
+        assert notifs.status_code == 200
+        assert len(notifs.json()) > 0
+
+        curated = await client.get("/api/v1/tracking/curated")
+        assert curated.status_code == 200
+        assert len(curated.json()) >= 1
+
+
+@pytest.mark.asyncio
+async def test_scraper_sources():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        login_res = await client.post(
+            "/api/v1/auth/login",
+            data={"username": "admin@opphub.kh", "password": "password123"}
+        )
+        token = login_res.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        sources = await client.get("/api/v1/scrapers/sources", headers=headers)
+        assert sources.status_code == 200
+        assert len(sources.json()) >= 1

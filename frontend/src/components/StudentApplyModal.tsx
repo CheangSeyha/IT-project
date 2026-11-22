@@ -36,8 +36,8 @@ export const StudentApplyModal: React.FC<StudentApplyModalProps> = ({
   const [statement, setStatement] = useState(
     'I am excited to submit my candidacy for this position. My academic coursework and practical projects align strongly with the required skills.'
   );
-  const [portfolioUrl, setPortfolioUrl] = useState('https://github.com/sokha-chan');
-  const [phoneNumber, setPhoneNumber] = useState('+855 12 889 900');
+  const [portfolioUrl, setPortfolioUrl] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
 
   if (!isOpen || !opportunity) return null;

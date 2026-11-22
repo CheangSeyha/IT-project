@@ -16,7 +16,7 @@ import {
   Check,
 } from 'lucide-react';
 import { Opportunity } from '@/types';
-import { fetchOpportunityById, getStoredUser } from '@/services/api';
+import { fetchOpportunityById, getStoredUser, toggleBookmarkApi } from '@/services/api';
 import { Navbar } from '@/components/Navbar';
 
 export default function OpportunityDetailPage() {
@@ -49,7 +49,7 @@ export default function OpportunityDetailPage() {
     }
   };
 
-  const handleToggleBookmark = () => {
+  const handleToggleBookmark = async () => {
     const user = getStoredUser();
     if (!user) {
       toast.info('Sign in to save opportunities to your tracking pipeline', {
@@ -60,8 +60,14 @@ export default function OpportunityDetailPage() {
       });
       return;
     }
-    setBookmarked(!bookmarked);
-    toast.success(bookmarked ? 'Removed from Bookmarks' : 'Saved to My Bookmarks');
+    const newStatus = !bookmarked;
+    setBookmarked(newStatus);
+    try {
+      await toggleBookmarkApi(id);
+      toast.success(newStatus ? 'Saved to My Bookmarks' : 'Removed from Bookmarks');
+    } catch {
+      toast.error('Failed to update bookmark');
+    }
   };
 
   if (loading) {

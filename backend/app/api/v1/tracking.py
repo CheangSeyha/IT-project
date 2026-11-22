@@ -1,13 +1,14 @@
-from datetime import datetime
-from typing import List
+from datetime import datetime, timedelta
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.api.v1.auth import get_current_active_user, require_role
+from app.api.v1.auth import get_current_user, get_current_active_user, require_role
 from app.models.user import User, UserRole
 from app.models.opportunity import Opportunity
+from app.models.scraper import ScraperLog
 from app.models.tracking import Bookmark, ApplicationTracker, CuratedCollection
 from app.schemas.opportunity import OpportunityResponse
 from app.schemas.tracking import (
@@ -248,3 +249,77 @@ async def get_engagement_analytics(
             "upskilling": 9,
         },
     }
+
+
+@router.get("/notifications")
+async def get_notifications(
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user),
+):
+    notifications = []
+    now = datetime.utcnow()
+    in_14_days = now + timedelta(days=14)
+
+    # 1. Closing soon opportunities
+    closing_res = await db.execute(
+        select(Opportunity)
+        .where(Opportunity.deadline.isnot(None), Opportunity.deadline >= now, Opportunity.deadline <= in_14_days)
+        .order_by(Opportunity.deadline.asc())
+        .limit(3)
+    )
+    for opp in closing_res.scalars().all():
+        days_left = max(1, (opp.deadline - now).days)
+        notifications.append({
+            "id": 1000 + opp.id,
+            "title": "Application Deadline Closing Soon",
+            "message": f"{opp.title} at {opp.organization} closes in {days_left} day(s).",
+            "timestamp": f"{days_left} days left",
+            "read": False,
+            "type": "deadline",
+            "opportunityId": opp.id,
+        })
+
+    # 2. Latest Opportunities
+    latest_res = await db.execute(
+        select(Opportunity).order_by(Opportunity.created_at.desc()).limit(2)
+    )
+    for opp in latest_res.scalars().all():
+        notifications.append({
+            "id": 2000 + opp.id,
+            "title": f"New Verified {opp.category.value.capitalize()} Listing",
+            "message": f"{opp.title} at {opp.organization} was recently published.",
+            "timestamp": "Recently added",
+            "read": False,
+            "type": "opportunity",
+            "opportunityId": opp.id,
+        })
+
+    # 3. Latest Curated Collections
+    col_res = await db.execute(
+        select(CuratedCollection).order_by(CuratedCollection.created_at.desc()).limit(2)
+    )
+    for col in col_res.scalars().all():
+        notifications.append({
+            "id": 3000 + col.id,
+            "title": "Teacher Collection Shared",
+            "message": f"'{col.title}' was curated for {col.target_group or 'students'}.",
+            "timestamp": "Recent",
+            "read": True,
+            "type": "curation",
+        })
+
+    # 4. Scraper activity
+    log_res = await db.execute(
+        select(ScraperLog).order_by(ScraperLog.started_at.desc()).limit(2)
+    )
+    for log in log_res.scalars().all():
+        notifications.append({
+            "id": 4000 + log.id,
+            "title": "Crawler Health Sync",
+            "message": f"{log.source_name}: {log.items_found} items found, {log.new_items} new normalized.",
+            "timestamp": "Crawler Pipeline",
+            "read": True,
+            "type": "system",
+        })
+
+    return notifications

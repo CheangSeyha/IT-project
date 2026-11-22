@@ -1,42 +1,61 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScraperSource, ScraperLog } from '@/types';
-import { fallbackScraperSources, fallbackScraperLogs } from '@/services/api';
+import {
+  fetchScraperSources,
+  fetchScraperLogs,
+  createScraperSource,
+  triggerScraperSource,
+} from '@/services/api';
 import { AddSourceModal } from './AddSourceModal';
 import { Database, Play, CheckCircle2, RefreshCw, Server, Activity, Plus, MapPin, Globe } from 'lucide-react';
 
 export const AdminScraperView: React.FC = () => {
-  const [sources, setSources] = useState<ScraperSource[]>(fallbackScraperSources);
-  const [logs, setLogs] = useState<ScraperLog[]>(fallbackScraperLogs);
+  const [sources, setSources] = useState<ScraperSource[]>([]);
+  const [logs, setLogs] = useState<ScraperLog[]>([]);
   const [runningId, setRunningId] = useState<number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const handleTriggerScraper = (id: number) => {
+  useEffect(() => {
+    Promise.all([fetchScraperSources(), fetchScraperLogs()])
+      .then(([srcs, lgs]) => {
+        setSources(srcs);
+        setLogs(lgs);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleTriggerScraper = async (id: number) => {
     setRunningId(id);
-    setTimeout(() => {
+    try {
+      const newLog = await triggerScraperSource(id);
+      setLogs(prev => [newLog, ...prev]);
       setSources(prev =>
-        prev.map(s => (s.id === id ? { ...s, last_run_at: 'Just now', items_scraped_total: s.items_scraped_total + 3 } : s))
+        prev.map(s =>
+          s.id === id ? { ...s, last_run_at: 'Just now', items_scraped_total: s.items_scraped_total + (newLog.new_items || 2) } : s
+        )
       );
-      setLogs(prev => [
-        {
-          id: Date.now(),
-          source_name: sources.find(s => s.id === id)?.name || 'Target Scraper',
-          started_at: 'Just now',
-          finished_at: 'Just now',
-          status: 'SUCCESS',
-          items_found: 15,
-          new_items: 3,
-          duplicates: 12,
-        },
-        ...prev,
-      ]);
+    } catch (e) {
+      console.error('Scraper trigger error', e);
+    } finally {
       setRunningId(null);
-    }, 1200);
+    }
   };
 
-  const handleAddSource = (newSource: ScraperSource) => {
-    setSources(prev => [...prev, newSource]);
+  const handleAddSource = async (newSource: ScraperSource) => {
+    try {
+      const created = await createScraperSource({
+        name: newSource.name,
+        target_url: newSource.target_url,
+        category: newSource.category,
+        location_type: newSource.location_type,
+        schedule_interval: newSource.schedule_interval,
+      });
+      setSources(prev => [...prev, created]);
+    } catch {
+      setSources(prev => [...prev, newSource]);
+    }
   };
 
   const totalScraped = sources.reduce((acc, s) => acc + s.items_scraped_total, 0);

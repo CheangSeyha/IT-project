@@ -5,9 +5,35 @@ from app.core.security import get_password_hash
 from app.models.user import User, UserRole
 from app.models.opportunity import Opportunity, OpportunityCategory, LocationType, WorkFormat
 from app.models.scraper import ScraperSource, ScraperLog, ScraperStatus
+from app.models.tracking import CuratedCollection
 
 
 async def seed_initial_data(db: AsyncSession):
+    # Check if curated collections exist; if not, seed them even if users already exist
+    cur_res = await db.execute(select(CuratedCollection).limit(1))
+    if not cur_res.scalars().first():
+        teacher_res = await db.execute(select(User).where(User.role == UserRole.TEACHER))
+        teacher = teacher_res.scalars().first()
+        if teacher:
+            initial_collections = [
+                CuratedCollection(
+                    teacher_id=teacher.id,
+                    title="Top 2027 International Scholarships for IT Graduates",
+                    target_group="Year 4 Undergraduate Students",
+                    description="Curated list of fully funded Master's fellowships (Chevening, MEXT, Australia Awards) with visa sponsorship and English proficiency criteria.",
+                    opportunity_ids="6,7,8",
+                ),
+                CuratedCollection(
+                    teacher_id=teacher.id,
+                    title="High-Priority Software & AI Summer Internships (Cambodia)",
+                    target_group="Year 2 & 3 Computer Science Cohort",
+                    description="Verified tech internships in Phnom Penh with established engineering mentors and competitive stipends.",
+                    opportunity_ids="1,3,5",
+                ),
+            ]
+            db.add_all(initial_collections)
+            await db.commit()
+
     # Check if data already exists
     res = await db.execute(select(User).limit(1))
     if res.scalars().first():

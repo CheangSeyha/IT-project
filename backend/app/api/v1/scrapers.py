@@ -9,6 +9,7 @@ from app.api.v1.auth import require_role
 from app.models.user import User, UserRole
 from app.models.scraper import ScraperSource, ScraperLog, ScraperStatus
 from app.schemas.scraper import (
+    ScraperSourceCreate,
     ScraperSourceResponse,
     ScraperLogResponse,
     ScraperHealthMetrics,
@@ -24,6 +25,42 @@ async def list_scraper_sources(
 ):
     res = await db.execute(select(ScraperSource).order_by(ScraperSource.id.asc()))
     return res.scalars().all()
+
+
+@router.post("/sources", response_model=ScraperSourceResponse)
+async def create_scraper_source(
+    source_in: ScraperSourceCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.ADMIN])),
+):
+    source = ScraperSource(
+        name=source_in.name,
+        target_url=source_in.target_url,
+        category=source_in.category,
+        location_type=source_in.location_type,
+        schedule_interval=source_in.schedule_interval,
+        status=ScraperStatus.ACTIVE,
+        items_scraped_total=0,
+    )
+    db.add(source)
+    await db.commit()
+    await db.refresh(source)
+    return source
+
+
+@router.delete("/sources/{source_id}")
+async def delete_scraper_source(
+    source_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.ADMIN])),
+):
+    res = await db.execute(select(ScraperSource).where(ScraperSource.id == source_id))
+    source = res.scalars().first()
+    if not source:
+        raise HTTPException(status_code=404, detail="Scraper source not found")
+    await db.delete(source)
+    await db.commit()
+    return {"message": "Scraper source deleted"}
 
 
 @router.post("/sources/{source_id}/run", response_model=ScraperLogResponse)
