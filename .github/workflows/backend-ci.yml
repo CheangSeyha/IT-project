@@ -1,0 +1,99 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [main, staging, dev]
+    paths:
+      - 'backend/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [main, staging]
+    paths:
+      - 'backend/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/backend-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  backend-test-and-build:
+    name: Backend Pytest & Docker Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: 'backend/requirements.txt'
+
+      - name: Install Dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Backend Tests
+        working-directory: ./backend
+        run: |
+          pytest -v
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build -t opphub-backend:ci ./backend
+
+      - name: Notify Telegram
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_TOPIC_ID: ${{ secrets.TELEGRAM_TOPIC_ID }}
+          COMMIT_RAW: ${{ github.event.head_commit.message }}
+          REF_NAME: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
+            if [ "$JOB_STATUS" = "success" ]; then
+              STATUS_ICON="✅"
+              STATUS_TEXT="<b>Build & Test Succeeded</b>"
+            elif [ "$JOB_STATUS" = "cancelled" ]; then
+              STATUS_ICON="⚠️"
+              STATUS_TEXT="<b>Build Cancelled</b>"
+            else
+              STATUS_ICON="❌"
+              STATUS_TEXT="<b>Build Failed</b>"
+            fi
+
+            APP_LABEL="⚙️ <b>Application:</b> OpportunityHub <i>(Backend API)</i>"
+            SHORT_SHA=$(echo "$SHA" | cut -c1-7)
+            COMMIT_URL="${SERVER_URL}/${REPO}/commit/${SHA}"
+            RUN_URL="${SERVER_URL}/${REPO}/actions/runs/${{ github.run_id }}"
+            COMMIT_MSG=$(echo "${COMMIT_RAW:-No commit message}" | head -n 1 | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+
+            MESSAGE="${STATUS_ICON} ${STATUS_TEXT}"$'\n'
+            MESSAGE+="━━━━━━━━━━━━━━━━━━"$'\n'
+            MESSAGE+="${APP_LABEL}"$'\n'
+            MESSAGE+="🌿 <b>Branch:</b> <code>${REF_NAME}</code>"$'\n'
+            MESSAGE+="🔖 <b>Commit:</b> <a href='${COMMIT_URL}'>${SHORT_SHA}</a>"$'\n'
+            MESSAGE+="💬 <b>Message:</b> ${COMMIT_MSG}"$'\n'
+            MESSAGE+="👤 <b>Triggered By:</b> ${ACTOR}"$'\n'
+            MESSAGE+="🔗 <a href='${RUN_URL}'>View GitHub Action Run</a>"
+
+            curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              -d chat_id="${TELEGRAM_CHAT_ID}" \
+              -d message_thread_id="${TELEGRAM_TOPIC_ID}" \
+              -d parse_mode="HTML" \
+              -d disable_web_page_preview="true" \
+              --data-urlencode "text=${MESSAGE}"
+          fi
