@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
-import { Opportunity, ApplicationStatus } from '@/types';
+import { Opportunity, ApplicationStatus, Language } from '@/types';
 import {
   LayoutDashboard,
   Sparkles,
@@ -23,6 +23,7 @@ interface ApplicationTrackerViewProps {
   trackers: Record<number, ApplicationStatus>;
   onUpdateStatus: (opportunityId: number, status: ApplicationStatus) => void;
   onSelect: (opp: Opportunity) => void;
+  language?: Language;
 }
 
 export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
@@ -30,6 +31,7 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
   trackers,
   onUpdateStatus,
   onSelect,
+  language = 'en',
 }) => {
   const columns: {
     id: ApplicationStatus;
@@ -40,35 +42,35 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
   }[] = [
     {
       id: 'saved',
-      title: 'Saved for Later',
+      title: language === 'km' ? 'បានរក្សាទុក' : 'Saved for Later',
       color: 'border-slate-300 text-slate-700',
       badgeBg: 'bg-slate-100 text-slate-700',
       icon: Bookmark,
     },
     {
       id: 'preparing',
-      title: 'Preparing Documents',
+      title: language === 'km' ? 'រៀបចំឯកសារ' : 'Preparing Documents',
       color: 'border-blue-300 text-blue-700',
       badgeBg: 'bg-blue-100 text-blue-800',
       icon: Clock,
     },
     {
       id: 'applied',
-      title: 'Applied / Submitted',
+      title: language === 'km' ? 'បានដាក់ពាក្យ' : 'Applied / Submitted',
       color: 'border-purple-300 text-purple-700',
       badgeBg: 'bg-purple-100 text-purple-800',
       icon: Send,
     },
     {
       id: 'interviewing',
-      title: 'Interview Scheduled',
+      title: language === 'km' ? 'កាលវិភាគសម្ភាសន៍' : 'Interview Scheduled',
       color: 'border-amber-300 text-amber-700',
       badgeBg: 'bg-amber-100 text-amber-800',
       icon: CheckCircle2,
     },
     {
       id: 'offered',
-      title: 'Offers Received',
+      title: language === 'km' ? 'ការផ្តល់ឱកាស' : 'Offers Received',
       color: 'border-emerald-300 text-emerald-700',
       badgeBg: 'bg-emerald-100 text-emerald-800',
       icon: Award,
@@ -131,10 +133,14 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
             <div className="w-8 h-8 rounded-xl bg-purple-600/10 flex items-center justify-center text-purple-600">
               <LayoutDashboard className="w-4 h-4" />
             </div>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">Student Application Pipeline</h2>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+              {language === 'km' ? 'កម្មវិធីតាមដានការដាក់ពាក្យ' : 'Student Application Pipeline'}
+            </h2>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Track and advance your job, internship, and scholarship applications through each milestone.
+            {language === 'km'
+              ? 'តាមដាន និងបោះជំហានពាក្យស្នើសុំការងារ កម្មសិក្សា និងអាហារូបករណ៍តាមដំណាក់កាលនីមួយៗ។'
+              : 'Track and advance your job, internship, and scholarship applications through each milestone.'}
           </p>
         </div>
 
@@ -142,19 +148,19 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
           <div className="px-3 py-1.5 bg-white text-slate-800 rounded-2xl border border-slate-200/90 shadow-xs flex items-center space-x-1.5">
             <span className="w-2 h-2 rounded-full bg-slate-400" />
-            <span>{totalTracked} Total Tracked</span>
+            <span>{totalTracked} {language === 'km' ? 'បានតាមដានសរុប' : 'Total Tracked'}</span>
           </div>
           <div className="px-3 py-1.5 bg-purple-50 text-purple-800 rounded-2xl border border-purple-200/80 shadow-xs flex items-center space-x-1.5">
             <span className="w-2 h-2 rounded-full bg-purple-600" />
-            <span>{appliedCount} Submitted</span>
+            <span>{appliedCount} {language === 'km' ? 'បានដាក់ពាក្យ' : 'Submitted'}</span>
           </div>
           <div className="px-3 py-1.5 bg-amber-50 text-amber-800 rounded-2xl border border-amber-200/80 shadow-xs flex items-center space-x-1.5">
             <span className="w-2 h-2 rounded-full bg-amber-600" />
-            <span>{interviewCount} Interviewing</span>
+            <span>{interviewCount} {language === 'km' ? 'កំពុងសម្ភាសន៍' : 'Interviewing'}</span>
           </div>
           <div className="px-3 py-1.5 bg-emerald-50 text-emerald-800 rounded-2xl border border-emerald-200/80 shadow-xs flex items-center space-x-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-600" />
-            <span>{offerCount} Offers</span>
+            <span>{offerCount} {language === 'km' ? 'ការផ្តល់ឱកាស' : 'Offers'}</span>
           </div>
         </div>
       </div>
@@ -186,8 +192,8 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
               <div className="space-y-3 flex-1">
                 {items.length === 0 ? (
                   <div className="h-32 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl text-center p-3 text-slate-400">
-                    <span className="text-xs font-medium">No items</span>
-                    <span className="text-[10px] text-slate-400">Drag or select stage</span>
+                    <span className="text-xs font-medium">{language === 'km' ? 'គ្មានទិន្នន័យ' : 'No items'}</span>
+                    <span className="text-[10px] text-slate-400">{language === 'km' ? 'ជ្រើសរើសដំណាក់កាល' : 'Select stage'}</span>
                   </div>
                 ) : (
                   items.map(opp => (
@@ -200,7 +206,17 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
                       <div>
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600">
-                            {opp.category}
+                            {language === 'km'
+                              ? opp.category === 'job'
+                                ? 'ការងារ'
+                                : opp.category === 'internship'
+                                ? 'កម្មសិក្សា'
+                                : opp.category === 'scholarship'
+                                ? 'អាហារូបករណ៍'
+                                : opp.category === 'upskilling'
+                                ? 'វគ្គបណ្តុះបណ្តាល'
+                                : 'កិច្ចការសាលា'
+                              : opp.category}
                           </span>
                           {opp.matchScore && (
                             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-100 flex items-center space-x-0.5">
@@ -226,7 +242,7 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
                           {opp.location_type === 'local' ? (
                             <>
                               <MapPin className="w-2.5 h-2.5 text-blue-500 shrink-0" />
-                              <span className="truncate">{opp.province_city || 'Cambodia'}</span>
+                              <span className="truncate">{opp.province_city || (language === 'km' ? 'កម្ពុជា' : 'Cambodia')}</span>
                             </>
                           ) : (
                             <>
@@ -239,18 +255,20 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
 
                       {/* Move Stage Selector */}
                       <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                        <span className="text-slate-400 font-semibold text-[10px]">Move:</span>
+                        <span className="text-slate-400 font-semibold text-[10px]">
+                          {language === 'km' ? 'ប្តូរ:' : 'Move:'}
+                        </span>
                         <select
                           value={col.id}
                           onChange={(e) => handleStageChange(opp, e.target.value as ApplicationStatus)}
                           className="bg-slate-50 border border-slate-200 rounded-xl px-2 py-0.5 text-[11px] text-slate-700 font-bold focus:outline-none focus:border-blue-500 cursor-pointer hover:bg-white transition-colors"
                         >
-                          <option value="saved">Saved</option>
-                          <option value="preparing">Preparing</option>
-                          <option value="applied">Applied</option>
-                          <option value="interviewing">Interview</option>
-                          <option value="offered">Offered</option>
-                          <option value="rejected">Archived</option>
+                          <option value="saved">{language === 'km' ? 'រក្សាទុក' : 'Saved'}</option>
+                          <option value="preparing">{language === 'km' ? 'រៀបចំ' : 'Preparing'}</option>
+                          <option value="applied">{language === 'km' ? 'បានដាក់' : 'Applied'}</option>
+                          <option value="interviewing">{language === 'km' ? 'សម្ភាសន៍' : 'Interview'}</option>
+                          <option value="offered">{language === 'km' ? 'ផ្តល់ឱកាស' : 'Offered'}</option>
+                          <option value="rejected">{language === 'km' ? 'ទុកក្នុងបណ្ណសារ' : 'Archived'}</option>
                         </select>
                       </div>
                     </motion.div>

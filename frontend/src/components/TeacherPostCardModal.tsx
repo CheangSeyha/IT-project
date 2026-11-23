@@ -22,16 +22,16 @@ export const TeacherPostCardModal: React.FC<TeacherPostCardModalProps> = ({
   onCardCreated,
 }) => {
   const [title, setTitle] = useState('');
-  const [organization, setOrganization] = useState('Faculty of Computer Science & IT');
+  const [organization, setOrganization] = useState('');
   const [category, setCategory] = useState<OpportunityCategory>('school_work');
   const [locationType, setLocationType] = useState<LocationType>('local');
   const [provinceCity, setProvinceCity] = useState('Phnom Penh');
   const [country, setCountry] = useState('Cambodia');
   const [workFormat, setWorkFormat] = useState<WorkFormat>('hybrid');
-  const [salaryOrFunding, setSalaryOrFunding] = useState('6 Academic Credits + $250/mo Stipend');
-  const [skills, setSkills] = useState('Python, Research, Problem Solving');
+  const [salaryOrFunding, setSalaryOrFunding] = useState('');
+  const [skills, setSkills] = useState('');
   const [description, setDescription] = useState('');
-  const [requirements, setRequirements] = useState('Enrolled in CS/IT Year 3 or 4 with minimum GPA 3.0.');
+  const [requirements, setRequirements] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
   const [loading, setLoading] = useState(false);
 

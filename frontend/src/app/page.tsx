@@ -7,7 +7,10 @@ import { toast } from 'sonner';
 import { Opportunity, ApplicationStatus, UserRole, FilterState, Language, User } from '@/types';
 import {
   fetchOpportunities,
+  fetchCategoryCounts,
   getStoredUser,
+  getStoredLanguage,
+  saveStoredLanguage,
   fetchApplications,
   updateApplicationTracker,
   toggleBookmarkApi,
@@ -24,6 +27,12 @@ import { TeacherPostCardModal } from '@/components/TeacherPostCardModal';
 import { StaffPostModal } from '@/components/StaffPostModal';
 import { ApplicationTrackerView } from '@/components/ApplicationTrackerView';
 import { TeacherCurationView } from '@/components/TeacherCurationView';
+import { PartnerEcosystemSection } from '@/components/PartnerEcosystemSection';
+import { PlatformFeaturesSection } from '@/components/PlatformFeaturesSection';
+import { HowItWorksSection } from '@/components/HowItWorksSection';
+import { FaqSection } from '@/components/FaqSection';
+import { CtaSection } from '@/components/CtaSection';
+import { Footer } from '@/components/Footer';
 import {
   Compass,
   RefreshCw,
@@ -40,6 +49,7 @@ export default function HomePage() {
   const [currentView, setCurrentView] = useState<'opportunities' | 'tracker' | 'curation'>('opportunities');
   const [activeRole, setActiveRole] = useState<UserRole>('student');
   const [language, setLanguage] = useState<Language>('en');
+  const [dbCategoryCounts, setDbCategoryCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
@@ -73,14 +83,31 @@ export default function HomePage() {
   // Application tracker map (opportunityId -> ApplicationStatus)
   const [trackers, setTrackers] = useState<Record<number, ApplicationStatus>>({});
 
-  // Check current session
+  // Check current session & language
   useEffect(() => {
     const user = getStoredUser();
     setCurrentUser(user);
     if (user) {
       setActiveRole(user.role);
     }
+    const savedLang = getStoredLanguage();
+    setLanguage(savedLang);
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = savedLang;
+    }
+
+    fetchCategoryCounts().then(counts => {
+      if (counts) setDbCategoryCounts(counts);
+    });
   }, []);
+
+  const handleLanguageChange = (lang: Language) => {
+    setLanguage(lang);
+    saveStoredLanguage(lang);
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang;
+    }
+  };
 
   // Fetch applications for current user if logged in
   useEffect(() => {
@@ -202,6 +229,27 @@ export default function HomePage() {
   }, [opportunities]);
 
   const categoryCounts = useMemo(() => {
+    const isFiltered =
+      filters.category !== 'all' ||
+      !!filters.searchQuery ||
+      filters.locationType !== 'all' ||
+      filters.visaSponsorshipOnly ||
+      filters.verifiedOnly ||
+      filters.closingSoonOnly ||
+      !!filters.provinceCity ||
+      !!filters.country;
+
+    if (!isFiltered && dbCategoryCounts.all) {
+      return {
+        all: dbCategoryCounts.all || opportunities.length,
+        job: dbCategoryCounts.job || 0,
+        internship: dbCategoryCounts.internship || 0,
+        scholarship: dbCategoryCounts.scholarship || 0,
+        upskilling: dbCategoryCounts.upskilling || 0,
+        school_work: dbCategoryCounts.school_work || 0,
+      };
+    }
+
     return {
       all: opportunities.length,
       job: opportunities.filter(o => o.category === 'job').length,
@@ -210,7 +258,7 @@ export default function HomePage() {
       upskilling: opportunities.filter(o => o.category === 'upskilling').length,
       school_work: opportunities.filter(o => o.category === 'school_work').length,
     };
-  }, [opportunities]);
+  }, [opportunities, dbCategoryCounts, filters]);
 
   const scrollToCatalog = () => {
     const el = document.getElementById('work-catalog');
@@ -220,7 +268,12 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
+    <div
+      lang={language}
+      className={`min-h-screen bg-slate-50 flex flex-col text-slate-900 selection:bg-blue-100 selection:text-blue-900 ${
+        language === 'km' ? 'font-khmer leading-relaxed' : 'font-sans'
+      }`}
+    >
       {/* Top Navbar */}
       <Navbar
         currentView={currentView}
@@ -231,7 +284,7 @@ export default function HomePage() {
         locationScope={filters.locationType}
         setLocationScope={(scope) => setFilters(prev => ({ ...prev, locationType: scope }))}
         language={language}
-        setLanguage={setLanguage}
+        setLanguage={handleLanguageChange}
       />
 
       {/* Main View Switcher with Animated Transitions */}
@@ -250,6 +303,7 @@ export default function HomePage() {
               trackers={trackers}
               onUpdateStatus={handleUpdateStatus}
               onSelect={setSelectedOpportunity}
+              language={language}
             />
           </motion.div>
         ) : currentView === 'curation' ? (
@@ -283,6 +337,9 @@ export default function HomePage() {
               onSearchSubmit={() => loadOpportunities(true)}
             />
 
+            {/* Institutional Partner Network & Official Sponsors */}
+            <PartnerEcosystemSection language={language} />
+
             {/* 2. Customized Role Ecosystem Section (Requested by User) */}
             <RolePathwaysSection
               currentUser={currentUser}
@@ -313,20 +370,28 @@ export default function HomePage() {
                     {currentUser ? (
                       <div>
                         <p className="font-extrabold text-slate-900 text-sm">
-                          {currentUser.role === 'student' && `Logged in as Student: ${currentUser.full_name}`}
-                          {currentUser.role === 'teacher' && `Teacher Privileges: ${currentUser.full_name}`}
-                          {currentUser.role === 'staff' && `Career Staff Privileges: ${currentUser.full_name}`}
-                          {currentUser.role === 'admin' && `System Administrator: ${currentUser.full_name}`}
+                          {currentUser.role === 'student' && (language === 'km' ? `គណនីសិស្ស៖ ${currentUser.full_name}` : `Logged in as Student: ${currentUser.full_name}`)}
+                          {currentUser.role === 'teacher' && (language === 'km' ? `សិទ្ធិគ្រូបង្រៀន៖ ${currentUser.full_name}` : `Teacher Privileges: ${currentUser.full_name}`)}
+                          {currentUser.role === 'staff' && (language === 'km' ? `សិទ្ធិមន្ត្រីការងារ៖ ${currentUser.full_name}` : `Career Staff Privileges: ${currentUser.full_name}`)}
+                          {currentUser.role === 'admin' && (language === 'km' ? `អ្នកគ្រប់គ្រងប្រព័ន្ធ៖ ${currentUser.full_name}` : `System Administrator: ${currentUser.full_name}`)}
                         </p>
                         <p className="text-[11px] text-slate-600">
                           {currentUser.role === 'student' &&
-                            'Browse below, select any card to apply directly, and monitor your milestones in My Applications.'}
+                            (language === 'km'
+                              ? 'ស្វែងរកឱកាសខាងក្រោម ជ្រើសរើសកាតដើម្បីដាក់ពាក្យស្នើសុំ និងតាមដានដំណាក់កាលនៅក្នុងទំព័រពាក្យស្នើសុំ។'
+                              : 'Browse below, select any card to apply directly, and monitor your milestones in My Applications.')}
                           {currentUser.role === 'teacher' &&
-                            'You have access to create school work cards and manage class collections from your dashboard.'}
+                            (language === 'km'
+                              ? 'អ្នកមានសិទ្ធិបង្កើតកាតកិច្ចការសាលា និងគ្រប់គ្រងបណ្តុំឱកាសសម្រាប់ថ្នាក់រៀន។'
+                              : 'You have access to create school work cards and manage class collections from your dashboard.')}
                           {currentUser.role === 'staff' &&
-                            'You can publish verified institutional opportunities and monitor live student engagement metrics.'}
+                            (language === 'km'
+                              ? 'អ្នកអាចផ្សព្វផ្សាយឱកាសផ្លូវការ និងពិនិត្យទិន្នន័យស្ថិតិនៃការចូលរួមរបស់សិស្ស។'
+                              : 'You can publish verified institutional opportunities and monitor live student engagement metrics.')}
                           {currentUser.role === 'admin' &&
-                            'Full administrative control over scrapers, sources, and user privileges.'}
+                            (language === 'km'
+                              ? 'ការគ្រប់គ្រងពេញលេញលើដំណើរការស្រង់ទិន្នន័យ ប្រភព និងសិទ្ធិអ្នកប្រើប្រាស់។'
+                              : 'Full administrative control over scrapers, sources, and user privileges.')}
                         </p>
                       </div>
                     ) : (
@@ -353,13 +418,13 @@ export default function HomePage() {
                           className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-bold shadow-sm flex items-center space-x-1.5 transition-all"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          <span>Create School Work Card</span>
+                          <span>{language === 'km' ? 'បង្កើតកាតកិច្ចការសាលា' : 'Create School Work Card'}</span>
                         </button>
                         <Link
                           href="/teacher"
                           className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl text-xs font-bold transition-colors"
                         >
-                          Teacher Dashboard
+                          {language === 'km' ? 'ផ្ទាំងគ្រប់គ្រងគ្រូ' : 'Teacher Dashboard'}
                         </Link>
                       </>
                     ) : currentUser.role === 'staff' ? (
@@ -369,13 +434,13 @@ export default function HomePage() {
                           className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold shadow-sm flex items-center space-x-1.5 transition-all"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          <span>Post Verified Opportunity</span>
+                          <span>{language === 'km' ? 'ផ្សព្វផ្សាយឱកាសផ្លូវការ' : 'Post Verified Opportunity'}</span>
                         </button>
                         <Link
                           href="/staff"
                           className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl text-xs font-bold transition-colors"
                         >
-                          Staff Dashboard
+                          {language === 'km' ? 'ផ្ទាំងគ្រប់គ្រងបុគ្គលិក' : 'Staff Dashboard'}
                         </Link>
                       </>
                     ) : (
@@ -383,7 +448,7 @@ export default function HomePage() {
                         onClick={scrollToCatalog}
                         className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold shadow-sm transition-all flex items-center space-x-1"
                       >
-                        <span>Select Cards Below</span>
+                        <span>{language === 'km' ? 'ជ្រើសរើសឱកាសខាងក្រោម' : 'Select Cards Below'}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     )
@@ -394,7 +459,7 @@ export default function HomePage() {
                         className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl text-xs font-bold shadow-sm flex items-center space-x-1.5 transition-all"
                       >
                         <UserCheck className="w-3.5 h-3.5" />
-                        <span>Register as Student</span>
+                        <span>{language === 'km' ? 'ចុះឈ្មោះជាសិស្ស' : 'Register as Student'}</span>
                       </Link>
                       <button
                         onClick={() => {
@@ -404,13 +469,19 @@ export default function HomePage() {
                         }}
                         className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl text-xs font-bold transition-colors"
                       >
-                        1-Click Student Demo
+                        {language === 'km' ? 'សាកល្បងសាកសិស្ស' : '1-Click Student Demo'}
                       </button>
                     </>
                   )}
                 </div>
               </div>
             </div>
+
+            {/* Core Architectural Pillars & Features */}
+            <PlatformFeaturesSection language={language} />
+
+            {/* 3-Step Student Roadmap */}
+            <HowItWorksSection language={language} onExploreClick={scrollToCatalog} />
 
             {/* 4. Opportunities Catalog & Work List Down */}
             <div id="work-catalog" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -420,6 +491,7 @@ export default function HomePage() {
                   filters={filters}
                   setFilters={setFilters}
                   onReset={handleResetFilters}
+                  language={language}
                 />
 
                 {/* Opportunities Grid & Results */}
@@ -435,7 +507,15 @@ export default function HomePage() {
 
                       {filters.locationType !== 'all' && (
                         <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-blue-100/80 text-blue-800 text-[11px] font-bold">
-                          <span>{filters.locationType === 'local' ? 'Cambodia' : 'Overseas'}</span>
+                          <span>
+                            {filters.locationType === 'local'
+                              ? language === 'km'
+                                ? 'កម្ពុជា'
+                                : 'Cambodia'
+                              : language === 'km'
+                              ? 'ក្រៅប្រទេស'
+                              : 'Overseas'}
+                          </span>
                           <button
                             onClick={() => setFilters(prev => ({ ...prev, locationType: 'all' }))}
                             className="hover:text-blue-950"
@@ -447,7 +527,19 @@ export default function HomePage() {
 
                       {filters.category !== 'all' && (
                         <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-slate-200/80 text-slate-800 text-[11px] font-bold capitalize">
-                          <span>{filters.category.replace('_', ' ')}</span>
+                          <span>
+                            {language === 'km'
+                              ? filters.category === 'job'
+                                ? 'ការងារ'
+                                : filters.category === 'internship'
+                                ? 'កម្មសិក្សា'
+                                : filters.category === 'scholarship'
+                                ? 'អាហារូបករណ៍'
+                                : filters.category === 'upskilling'
+                                ? 'វគ្គបណ្តុះបណ្តាល'
+                                : 'កិច្ចការសាលា'
+                              : filters.category.replace('_', ' ')}
+                          </span>
                           <button
                             onClick={() => setFilters(prev => ({ ...prev, category: 'all' }))}
                             className="hover:text-slate-950"
@@ -471,7 +563,7 @@ export default function HomePage() {
 
                       {filters.highMatchOnly && (
                         <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
-                          90%+ Match
+                          {language === 'km' ? 'ត្រូវគ្នា ៩០%+' : '90%+ Match'}
                         </span>
                       )}
                     </div>
@@ -479,7 +571,7 @@ export default function HomePage() {
                     <button
                       onClick={() => loadOpportunities(true)}
                       className="p-2 text-slate-500 hover:text-blue-600 rounded-xl hover:bg-white border border-transparent hover:border-slate-200 transition-all shadow-xs"
-                      title="Sync listings"
+                      title={language === 'km' ? 'ធ្វើសមកាលកម្មទិន្នន័យ' : 'Sync listings'}
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600' : ''}`} />
                     </button>
@@ -495,15 +587,19 @@ export default function HomePage() {
                       <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mx-auto">
                         <Compass className="w-6 h-6" />
                       </div>
-                      <h3 className="text-base font-extrabold text-slate-800">No matching opportunities found</h3>
+                      <h3 className="text-base font-bold text-slate-800">
+                        {language === 'km' ? 'រកមិនឃើញឱកាសដែលត្រូវគ្នានឹងការស្វែងរកទេ' : 'No matching opportunities found'}
+                      </h3>
                       <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                        Try broadening your search keywords or resetting specific filters in the sidebar.
+                        {language === 'km'
+                          ? 'សូមសាកល្បងពង្រីកពាក្យគន្លឹះស្វែងរក ឬកំណត់តម្រងឡើងវិញនៅក្នុងផ្ទាំងចំហៀង។'
+                          : 'Try broadening your search keywords or resetting specific filters in the sidebar.'}
                       </p>
                       <button
                         onClick={handleResetFilters}
                         className="px-4 py-2 text-xs font-bold rounded-2xl bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-xs"
                       >
-                        Reset All Filters
+                        {language === 'km' ? 'កំណត់តម្រងឡើងវិញ' : 'Reset All Filters'}
                       </button>
                     </motion.div>
                   ) : (
@@ -520,6 +616,7 @@ export default function HomePage() {
                           }}
                           onApply={handleInitiateApply}
                           isApplied={trackers[opp.id] === 'applied'}
+                          language={language}
                         />
                       ))}
                     </div>
@@ -527,6 +624,16 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+
+            {/* Frequently Asked Questions */}
+            <FaqSection language={language} />
+
+            {/* Final Call to Action */}
+            <CtaSection
+              language={language}
+              currentUser={currentUser}
+              onExploreClick={scrollToCatalog}
+            />
           </main>
         )}
       </AnimatePresence>
@@ -540,6 +647,7 @@ export default function HomePage() {
         currentStatus={selectedOpportunity ? trackers[selectedOpportunity.id] : 'saved'}
         onApply={handleInitiateApply}
         isApplied={selectedOpportunity ? trackers[selectedOpportunity.id] === 'applied' : false}
+        language={language}
       />
 
       {/* Auth Prompt Modal (For Unauthenticated Users) */}
@@ -579,13 +687,11 @@ export default function HomePage() {
         onAddOpportunity={handleCardCreated}
       />
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200/80 py-6 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2 font-medium">
-          <p>© 2026 OpportunityHub (OppHub) • Year 5 IT Project Management</p>
-          <p>Automated Scrapers strictly adhere to robots.txt & ethical crawling guidelines.</p>
-        </div>
-      </footer>
+      {/* Comprehensive Multi-Column Footer */}
+      <Footer
+        language={language}
+        onLanguageToggle={() => handleLanguageChange(language === 'en' ? 'km' : 'en')}
+      />
     </div>
   );
 }

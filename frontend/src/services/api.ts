@@ -51,6 +51,20 @@ export function logoutUser() {
   }
 }
 
+export function getStoredLanguage(): 'en' | 'km' {
+  if (typeof window !== 'undefined') {
+    const lang = localStorage.getItem('opphub_language');
+    if (lang === 'km' || lang === 'en') return lang;
+  }
+  return 'en';
+}
+
+export function saveStoredLanguage(lang: 'en' | 'km') {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('opphub_language', lang);
+  }
+}
+
 function getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
   const token = getStoredToken();
   const headers: Record<string, string> = {
@@ -67,6 +81,9 @@ function getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<strin
 
 export async function fetchOpportunities(filters?: FilterState): Promise<{ items: Opportunity[]; total: number }> {
   const params = new URLSearchParams();
+  // Ensure we load all listings from backend
+  params.append('page_size', '100');
+
   if (filters) {
     if (filters.searchQuery) params.append('q', filters.searchQuery);
     if (filters.category && filters.category !== 'all') params.append('category', filters.category);
@@ -89,6 +106,20 @@ export async function fetchOpportunities(filters?: FilterState): Promise<{ items
 
   const data = await response.json();
   return { items: data.items || [], total: data.total || 0 };
+}
+
+export async function fetchCategoryCounts(): Promise<Record<string, number>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/opportunities/counts`, {
+      headers: getAuthHeaders(),
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.error('Failed to load category counts', err);
+  }
+  return { all: 0, job: 0, internship: 0, scholarship: 0, upskilling: 0, school_work: 0 };
 }
 
 export async function fetchOpportunityById(id: number): Promise<Opportunity | null> {
@@ -362,7 +393,7 @@ export async function fetchCuratedCollections(): Promise<CuratedCollection[]> {
     description: c.description || '',
     opportunityIds: c.opportunity_ids ? c.opportunity_ids.split(',').map((x: string) => parseInt(x, 10)).filter((n: number) => !isNaN(n)) : [],
     createdAt: c.created_at ? new Date(c.created_at).toLocaleDateString() : 'Recent',
-    viewsCount: 120,
+    viewsCount: c.opportunity_ids ? c.opportunity_ids.split(',').length * 4 : 0,
   }));
 }
 
@@ -391,7 +422,7 @@ export async function createCuratedCollection(data: {
     description: c.description || '',
     opportunityIds: c.opportunity_ids ? c.opportunity_ids.split(',').map((x: string) => parseInt(x, 10)).filter((n: number) => !isNaN(n)) : [],
     createdAt: 'Just now',
-    viewsCount: 1,
+    viewsCount: 0,
   };
 }
 
@@ -432,7 +463,7 @@ export async function fetchScraperSources(): Promise<ScraperSource[]> {
   const list = await res.json();
   return list.map((s: { id: number; name: string; target_url: string; category: string; location_type: string; schedule_interval: string; last_run_at?: string; status: 'active' | 'paused' | 'error'; items_scraped_total: number }) => ({
     ...s,
-    successRate: 98.5,
+    successRate: s.status === 'active' ? 100 : (s.status === 'error' ? 0 : 75),
   }));
 }
 
@@ -454,7 +485,7 @@ export async function createScraperSource(data: {
   }
 
   const s = await res.json();
-  return { ...s, successRate: 100.0 };
+  return { ...s, successRate: 100 };
 }
 
 export async function deleteScraperSource(sourceId: number): Promise<void> {

@@ -31,11 +31,11 @@ export default function TeacherPage() {
 
   // New Academic Event Form State
   const [eventTitle, setEventTitle] = useState('');
-  const [organizer, setOrganizer] = useState('Faculty of Engineering & IT');
+  const [organizer, setOrganizer] = useState('');
   const [eventDate, setEventDate] = useState('');
-  const [venue, setVenue] = useState('CADT Auditorium / Zoom Online');
+  const [venue, setVenue] = useState('');
   const [description, setDescription] = useState('');
-  const [targetCohort, setTargetCohort] = useState('Year 3 & Year 4 Students');
+  const [targetCohort, setTargetCohort] = useState('');
   const [registrationLink, setRegistrationLink] = useState('');
 
   useEffect(() => {

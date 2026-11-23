@@ -38,7 +38,7 @@ export const RolePathwaysSection: React.FC<RolePathwaysSectionProps> = ({
           <Sparkles className="w-3.5 h-3.5 text-blue-600" />
           <span>{language === 'km' ? 'ប្រព័ន្ធតួនាទី OpportunityHub' : 'OpportunityHub Role Pathways'}</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
+        <h2 className={`text-2xl sm:text-3xl text-slate-950 ${language === 'km' ? 'font-bold tracking-normal leading-snug' : 'font-black tracking-tight'}`}>
           {language === 'km' ? (
             <>
               ស្វែងរក ឬ បង្ហោះ <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">ឱកាសសិក្សា & ការងារ</span>
@@ -71,29 +71,31 @@ export const RolePathwaysSection: React.FC<RolePathwaysSectionProps> = ({
                 <GraduationCap className="w-6 h-6" />
               </div>
               <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 tracking-wider">
-                Student Role
+                {language === 'km' ? 'តួនាទីសិស្ស' : 'Student Role'}
               </span>
             </div>
 
-            <h3 className="text-base font-black text-slate-900 group-hover:text-blue-600 transition-colors">
-              Find Job & School Work
+            <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+              {language === 'km' ? 'ស្វែងរកការងារ & កិច្ចការសាលា' : 'Find Job & School Work'}
             </h3>
             <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-              Register as a student, browse curated verified listings, calculate your skill-match score, and select any card to submit your application directly.
+              {language === 'km'
+                ? 'ចុះឈ្មោះជាសិស្ស ស្វែងរកឱកាសដែលបានផ្ទៀងផ្ទាត់ គណនាពិន្ទុត្រូវគ្នាតាមជំនាញ និងជ្រើសរើសកាតណាមួយដើម្បីដាក់ពាក្យស្នើសុំភ្លាមៗ។'
+                : 'Register as a student, browse curated verified listings, calculate your skill-match score, and select any card to submit your application directly.'}
             </p>
 
             <div className="mt-4 space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span>Select any card to apply directly</span>
+                <span>{language === 'km' ? 'ជ្រើសរើសកាតដើម្បីដាក់ពាក្យផ្ទាល់' : 'Select any card to apply directly'}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span>Track application pipeline & offers</span>
+                <span>{language === 'km' ? 'តាមដានដំណាក់កាលពាក្យស្នើសុំ' : 'Track application pipeline & offers'}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span>AI skill profile matching score</span>
+                <span>{language === 'km' ? 'គណនាពិន្ទុត្រូវគ្នាតាមជំនាញ' : 'AI skill profile matching score'}</span>
               </div>
             </div>
           </div>
@@ -105,14 +107,14 @@ export const RolePathwaysSection: React.FC<RolePathwaysSectionProps> = ({
                 className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-2xl shadow-sm flex items-center justify-center space-x-2 transition-all"
               >
                 <Compass className="w-4 h-4" />
-                <span>Browse & Select Cards Below</span>
+                <span>{language === 'km' ? 'ជ្រើសរើសកាតការងារខាងក្រោម' : 'Browse & Select Cards Below'}</span>
               </button>
             ) : (
               <Link
                 href="/login?mode=register&role=student"
                 className="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-2xl shadow-sm flex items-center justify-center space-x-2 transition-all"
               >
-                <span>Register as Student to Apply</span>
+                <span>{language === 'km' ? 'ចុះឈ្មោះជាសិស្សដើម្បីដាក់ពាក្យ' : 'Register as Student to Apply'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             )}
@@ -132,29 +134,31 @@ export const RolePathwaysSection: React.FC<RolePathwaysSectionProps> = ({
                 <Users className="w-6 h-6" />
               </div>
               <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-purple-100 text-purple-800 tracking-wider">
-                Teacher Role
+                {language === 'km' ? 'តួនាទីសាស្ត្រាចារ្យ' : 'Teacher Role'}
               </span>
             </div>
 
-            <h3 className="text-base font-black text-slate-900 group-hover:text-purple-600 transition-colors">
-              Teacher Dashboard & Post Cards
+            <h3 className="text-base font-bold text-slate-900 group-hover:text-purple-600 transition-colors">
+              {language === 'km' ? 'ផ្ទាំងគ្រូបង្រៀន & បង្កើតកាត' : 'Teacher Dashboard & Post Cards'}
             </h3>
             <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-              Create academic work and project cards for your students, curate recommended scholarship bundles for cohorts, and broadcast seminars.
+              {language === 'km'
+                ? 'បង្កើតកិច្ចការសាលា និងគម្រោងស្រាវជ្រាវសម្រាប់និស្សិត ចងក្រងបញ្ជីអាហារូបករណ៍ និងផ្សព្វផ្សាយសិក្ខាសាលាអប់រំ។'
+                : 'Create academic work and project cards for your students, curate recommended scholarship bundles for cohorts, and broadcast seminars.'}
             </p>
 
             <div className="mt-4 space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                <span>Create & post school work cards</span>
+                <span>{language === 'km' ? 'បង្កើត និងបង្ហោះកាតកិច្ចការសាលា' : 'Create & post school work cards'}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                <span>Curate cohort opportunity collections</span>
+                <span>{language === 'km' ? 'ចងក្រងកម្រងឱកាសសម្រាប់និស្សិត' : 'Curate cohort opportunity collections'}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                <span>Broadcast academic events & seminars</span>
+                <span>{language === 'km' ? 'ផ្សព្វផ្សាយសិក្ខាសាលា និងព្រឹត្តិការណ៍' : 'Broadcast academic events & seminars'}</span>
               </div>
             </div>
           </div>
@@ -165,13 +169,13 @@ export const RolePathwaysSection: React.FC<RolePathwaysSectionProps> = ({
               className="flex-1 py-2.5 px-3 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-2xl shadow-sm flex items-center justify-center space-x-1.5 transition-all"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Create Card</span>
+              <span>{language === 'km' ? 'បង្កើតកាត' : 'Create Card'}</span>
             </button>
             <Link
               href="/teacher"
               className="py-2.5 px-3.5 bg-purple-50 hover:bg-purple-100 text-purple-800 text-xs font-bold rounded-2xl border border-purple-200/80 transition-colors"
             >
-              Dashboard
+              {language === 'km' ? 'ផ្ទាំងគ្រប់គ្រង' : 'Dashboard'}
             </Link>
           </div>
         </motion.div>
@@ -189,29 +193,31 @@ export const RolePathwaysSection: React.FC<RolePathwaysSectionProps> = ({
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 tracking-wider">
-                Staff Role
+                {language === 'km' ? 'តួនាទីបុគ្គលិក' : 'Staff Role'}
               </span>
             </div>
 
-            <h3 className="text-base font-black text-slate-900 group-hover:text-emerald-700 transition-colors">
-              Staff Dashboard & Postings
+            <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+              {language === 'km' ? 'ផ្ទាំងបុគ្គលិក & បង្ហោះឱកាស' : 'Staff Dashboard & Postings'}
             </h3>
             <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-              Post verified institutional career listings, manage university employer partnerships, and inspect live student application and search analytics.
+              {language === 'km'
+                ? 'បង្ហោះឱកាសការងារផ្លូវការរបស់ស្ថាប័ន គ្រប់គ្រងទំនាក់ទំនងនិយោជក និងត្រួតពិនិត្យទិន្នន័យនៃការដាក់ពាក្យរបស់និស្សិត។'
+                : 'Post verified institutional career listings, manage university employer partnerships, and inspect live student application and search analytics.'}
             </p>
 
             <div className="mt-4 space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>Post verified institutional opportunities</span>
+                <span>{language === 'km' ? 'បង្ហោះឱកាសដែលមានការបញ្ជាក់ផ្លូវការ' : 'Post verified institutional opportunities'}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>Manage official job & internship cards</span>
+                <span>{language === 'km' ? 'គ្រប់គ្រងកាតការងារ និងកម្មសិក្សា' : 'Manage official job & internship cards'}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>Engagement & keyword analytics dashboard</span>
+                <span>{language === 'km' ? 'ផ្ទាំងវិភាគទិន្នន័យ និងពាក្យស្វែងរក' : 'Engagement & keyword analytics dashboard'}</span>
               </div>
             </div>
           </div>
@@ -222,13 +228,13 @@ export const RolePathwaysSection: React.FC<RolePathwaysSectionProps> = ({
               className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-2xl shadow-sm flex items-center justify-center space-x-1.5 transition-all"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Post Verified Card</span>
+              <span>{language === 'km' ? 'បង្ហោះឱកាស' : 'Post Verified Card'}</span>
             </button>
             <Link
               href="/staff"
               className="py-2.5 px-3.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-2xl border border-emerald-200/80 transition-colors"
             >
-              Dashboard
+              {language === 'km' ? 'ផ្ទាំងគ្រប់គ្រង' : 'Dashboard'}
             </Link>
           </div>
         </motion.div>

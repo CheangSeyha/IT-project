@@ -41,6 +41,7 @@ import {
 import { AddSourceModal } from '@/components/AddSourceModal';
 import { NotificationDropdown } from '@/components/NotificationDropdown';
 import { AlertSettingsModal } from '@/components/AlertSettingsModal';
+import { StaffAnalyticsView } from '@/components/StaffAnalyticsView';
 
 type AdminTab = 'overview' | 'crawlers' | 'moderation' | 'users' | 'analytics' | 'logs';
 
@@ -192,6 +193,12 @@ export default function AdminPage() {
   };
 
   const totalScraped = sources.reduce((acc, s) => acc + s.items_scraped_total, 0);
+  const activeSourcesCount = sources.filter(s => s.status === 'active').length;
+  const crawlSuccessRate = sources.length > 0 ? ((activeSourcesCount / sources.length) * 100).toFixed(0) : '100';
+  const totalItemsFound = logs.reduce((acc, l) => acc + (l.items_found || 0), 0);
+  const totalNewItems = logs.reduce((acc, l) => acc + (l.new_items || 0), 0);
+  const dedupEfficiency = totalItemsFound > 0 ? (((totalItemsFound - totalNewItems) / totalItemsFound) * 100).toFixed(1) + '%' : '0.0%';
+
   const filteredSources = sources.filter(s =>
     s.name.toLowerCase().includes(searchCrawler.toLowerCase()) ||
     s.target_url.toLowerCase().includes(searchCrawler.toLowerCase())
@@ -329,7 +336,7 @@ export default function AdminPage() {
           <div className="flex items-center space-x-2.5">
             <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-xl text-xs font-semibold shadow-2xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>5 Spiders Healthy</span>
+              <span>{activeSourcesCount} Spiders Active</span>
             </div>
 
             {/* Ingestion & Alert Rules Settings Button */}
@@ -399,7 +406,7 @@ export default function AdminPage() {
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
                   <span className="text-xs font-medium text-slate-500 block">Active Target Sources</span>
                   <span className="text-2xl font-black text-slate-900 mt-1 block">{sources.length}</span>
-                  <span className="text-[11px] text-emerald-600 font-semibold mt-1 block">100% Crawl Success Rate</span>
+                  <span className="text-[11px] text-emerald-600 font-semibold mt-1 block">{crawlSuccessRate}% System Health</span>
                 </div>
 
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
@@ -410,7 +417,7 @@ export default function AdminPage() {
 
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
                   <span className="text-xs font-medium text-slate-500 block">Deduplication Efficiency</span>
-                  <span className="text-2xl font-black text-indigo-600 mt-1 block">78.4%</span>
+                  <span className="text-2xl font-black text-indigo-600 mt-1 block">{dedupEfficiency}</span>
                   <span className="text-[11px] text-slate-400 font-medium mt-1 block">SimHash & canonical dedup</span>
                 </div>
 
@@ -432,24 +439,29 @@ export default function AdminPage() {
                   <span className="text-xs text-slate-400">Strict robots.txt Rate-Limiting Enforced</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5">
-                    <span className="text-slate-400 block font-medium">Local Career Spiders</span>
-                    <span className="font-bold text-slate-800 text-sm block">CamHR & BongThom Spiders</span>
-                    <span className="text-emerald-700 font-semibold block">Schedule: Every 6 Hours</span>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5">
-                    <span className="text-slate-400 block font-medium">Academic & University Notice Crawlers</span>
-                    <span className="font-bold text-slate-800 text-sm block">CADT & RUPP Portals</span>
-                    <span className="text-blue-700 font-semibold block">Schedule: Daily Cron (24h)</span>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5">
-                    <span className="text-slate-400 block font-medium">International Fellowship Spiders</span>
-                    <span className="font-bold text-slate-800 text-sm block">Chevening & MEXT Japan</span>
-                    <span className="text-indigo-700 font-semibold block">Schedule: Weekly Sync</span>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+                  {sources.length > 0 ? (
+                    sources.map((src) => (
+                      <div key={src.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400 block font-medium capitalize">{src.category} Spider</span>
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                            src.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
+                          }`}>
+                            {src.status}
+                          </span>
+                        </div>
+                        <span className="font-bold text-slate-800 text-sm block truncate">{src.name}</span>
+                        <span className="text-blue-700 font-semibold block">
+                          Schedule: {src.schedule_interval} • {src.items_scraped_total} ingested
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-4 text-center text-slate-400 text-xs">
+                      No crawlers configured yet.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -732,74 +744,8 @@ export default function AdminPage() {
 
           {/* TAB 4: ANALYTICS */}
           {activeTab === 'analytics' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Top Cambodian Student Search Trends</h3>
-                <div className="space-y-3 text-xs">
-                  {[
-                    { kw: 'Python / FastAPI Fintech', count: '482 queries', growth: '+28%' },
-                    { kw: 'Chevening UK Scholarship', count: '520 queries', growth: '+34%' },
-                    { kw: 'Phnom Penh Tech Internships', count: '390 queries', growth: '+19%' },
-                    { kw: 'CADT AI Bootcamp', count: '284 queries', growth: '+42%' },
-                    { kw: 'MEXT Japan Postgraduate', count: '315 queries', growth: '+12%' },
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
-                      <div>
-                        <span className="font-bold text-slate-800">{item.kw}</span>
-                        <span className="text-slate-400 block text-[11px] mt-0.5">{item.count}</span>
-                      </div>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-                        {item.growth}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Opportunity Engagement Distribution</h3>
-                <div className="space-y-4 text-xs font-semibold text-slate-700">
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span>International Scholarships</span>
-                      <span>41%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                      <div className="bg-amber-500 h-full rounded-full" style={{ width: '41%' }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span>Local Tech & Software Jobs</span>
-                      <span>32%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                      <div className="bg-blue-600 h-full rounded-full" style={{ width: '32%' }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span>Undergraduate Internships</span>
-                      <span>18%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                      <div className="bg-purple-600 h-full rounded-full" style={{ width: '18%' }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span>Digital Upskilling</span>
-                      <span>9%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                      <div className="bg-emerald-600 h-full rounded-full" style={{ width: '9%' }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden p-6">
+              <StaffAnalyticsView />
             </div>
           )}
 

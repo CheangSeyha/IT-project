@@ -33,9 +33,7 @@ export const StudentApplyModal: React.FC<StudentApplyModalProps> = ({
   currentUser,
   onApplicationSubmitted,
 }) => {
-  const [statement, setStatement] = useState(
-    'I am excited to submit my candidacy for this position. My academic coursework and practical projects align strongly with the required skills.'
-  );
+  const [statement, setStatement] = useState('');
   const [portfolioUrl, setPortfolioUrl] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
@@ -126,14 +124,14 @@ export const StudentApplyModal: React.FC<StudentApplyModalProps> = ({
                   Applying as Verified Student
                 </span>
                 <p className="text-xs font-black text-slate-900 mt-0.5">
-                  {currentUser?.full_name || 'Sokha Chan'}
+                  {currentUser?.full_name || 'Verified Applicant'}
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  {currentUser?.email || 'student@opphub.kh'} • {currentUser?.field_of_study || 'Computer Science'}
+                  {currentUser?.email || 'Registered Student'} {currentUser?.field_of_study ? `• ${currentUser.field_of_study}` : ''}
                 </p>
               </div>
               <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
-                {(currentUser?.full_name || 'S').charAt(0)}
+                {(currentUser?.full_name || 'U').charAt(0).toUpperCase()}
               </div>
             </div>
 

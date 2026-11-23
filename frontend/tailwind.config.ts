@@ -8,6 +8,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        khmer: ["'Kantumruy Pro'", "sans-serif"],
+        sans: ["'Kantumruy Pro'", "var(--font-geist-sans)", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",

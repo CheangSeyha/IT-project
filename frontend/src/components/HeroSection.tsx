@@ -47,10 +47,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   // Rotating animated headlines
   const dynamicRoles = [
-    { en: 'Career Opportunities', km: 'ឱកាសការងារបច្ចេកវិទ្យា', gradient: 'from-blue-600 via-indigo-600 to-violet-600' },
-    { en: 'Tech Internships', km: 'កម្មសិក្សាជំនាញឌីជីថល', gradient: 'from-purple-600 via-indigo-600 to-blue-600' },
-    { en: 'Global Scholarships', km: 'អាហារូបករណ៍ក្រៅប្រទេស', gradient: 'from-amber-600 via-rose-600 to-indigo-600' },
-    { en: 'AI & Cloud Bootcamps', km: 'វគ្គបណ្តុះបណ្តាល AI ឥតគិតថ្លៃ', gradient: 'from-emerald-600 via-teal-600 to-blue-600' },
+    { en: 'Career Opportunities', km: 'ការងារបច្ចេកវិទ្យា', gradient: 'from-blue-600 via-indigo-600 to-violet-600' },
+    { en: 'Tech Internships', km: 'កម្មសិក្សាឌីជីថល', gradient: 'from-purple-600 via-indigo-600 to-blue-600' },
+    { en: 'Global Scholarships', km: 'អាហារូបករណ៍អន្តរជាតិ', gradient: 'from-amber-600 via-rose-600 to-indigo-600' },
+    { en: 'AI & Cloud Bootcamps', km: 'វគ្គបណ្តុះបណ្តាល AI & Cloud', gradient: 'from-emerald-600 via-teal-600 to-blue-600' },
   ];
 
   const [roleIndex, setRoleIndex] = useState(0);
@@ -58,10 +58,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   // Rotating search placeholders
   const placeholderQueries = [
     language === 'km' ? "ស្វែងរក: 'Python, FastAPI, Next.js'..." : "Try: 'Python, FastAPI, Next.js'...",
-    language === 'km' ? "ស្វែងរក: 'Chevening Scholarship UK'..." : "Try: 'Chevening Master scholarship'...",
-    language === 'km' ? "ស្វែងរក: 'Flutter mobile developer'..." : "Try: 'Flutter mobile banking intern'...",
-    language === 'km' ? "ស្វែងរក: 'CADT AI Bootcamp MoEYS'..." : "Try: 'CADT AI Bootcamp MoEYS'...",
-    language === 'km' ? "ស្វែងរក: 'Phnom Penh hybrid'..." : "Try: 'Phnom Penh remote or hybrid'...",
+    language === 'km' ? "ស្វែងរក: 'អាហារូបករណ៍ Chevening UK'..." : "Try: 'Chevening Master scholarship'...",
+    language === 'km' ? "ស្វែងរក: 'កម្មសិក្សា Flutter Mobile'..." : "Try: 'Flutter mobile banking intern'...",
+    language === 'km' ? "ស្វែងរក: 'CADT AI Bootcamp'..." : "Try: 'CADT AI Bootcamp MoEYS'...",
+    language === 'km' ? "ស្វែងរក: 'រាជធានីភ្នំពេញ hybrid'..." : "Try: 'Phnom Penh remote or hybrid'...",
   ];
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
@@ -278,7 +278,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         className="hidden lg:flex absolute left-12 2xl:left-24 bottom-12 items-center space-x-2 px-3 py-1.5 rounded-full bg-white/85 backdrop-blur-md border border-slate-200/80 shadow-xs text-[11px] font-semibold text-slate-700 z-10"
       >
         <Zap className="w-3.5 h-3.5 text-amber-500" />
-        <span>BongThom & CamHR • Live 6h Sync</span>
+        <span>{language === 'km' ? 'ធ្វើបច្ចុប្បន្នភាពរៀងរាល់ ៦ ម៉ោង' : 'BongThom & CamHR • Live 6h Sync'}</span>
       </motion.div>
 
       {/* Floating Micro Badge (Bottom Right) */}
@@ -295,7 +295,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         className="hidden lg:flex absolute right-12 2xl:right-24 bottom-12 items-center space-x-2 px-3 py-1.5 rounded-full bg-white/85 backdrop-blur-md border border-slate-200/80 shadow-xs text-[11px] font-semibold text-slate-700 z-10"
       >
         <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-        <span>CADT AI Bootcamp • MoEYS Grant</span>
+        <span>{language === 'km' ? 'អាហារូបករណ៍ និងវគ្គបណ្តុះបណ្តាល' : 'CADT AI Bootcamp • MoEYS Grant'}</span>
       </motion.div>
 
       <div className="max-w-4xl mx-auto text-center relative z-20">
@@ -309,8 +309,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
           </span>
-          <span className="font-semibold text-slate-900 tracking-tight">
-            {language === 'km' ? 'ប្រព័ន្ធប្រមូលផ្តុំទិន្នន័យផ្ទាល់ ២០២៦' : 'Live Opportunity Pipeline'}
+          <span className="font-semibold text-slate-900">
+            {language === 'km' ? 'ប្រព័ន្ធប្រមូលឱកាសផ្ទាល់ ២០២៦' : 'Live Opportunity Pipeline'}
           </span>
           <span className="text-slate-300">|</span>
           <span className="text-blue-700 font-semibold text-[11px]">
@@ -321,7 +321,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
 
         {/* Dynamic Animated Headline with Word Rotator */}
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-950 tracking-tight leading-[1.18] sm:leading-[1.12]">
+        <h1
+          className={`text-4xl sm:text-5xl lg:text-6xl text-slate-950 ${
+            language === 'km'
+              ? 'font-bold tracking-normal leading-[1.3] sm:leading-[1.25]'
+              : 'font-black tracking-tight leading-[1.18] sm:leading-[1.12]'
+          }`}
+        >
           {language === 'km' ? 'ស្វែងរកឱកាស' : 'Find Your Next'}{' '}
           <span className="inline-block relative min-w-[260px] sm:min-w-[420px] text-left">
             <AnimatePresence mode="wait">
@@ -331,7 +337,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
                 exit={{ y: -24, opacity: 0, filter: 'blur(4px)' }}
                 transition={{ duration: 0.45, ease: 'easeOut' }}
-                className={`inline-block bg-gradient-to-r ${dynamicRoles[roleIndex].gradient} bg-clip-text text-transparent`}
+                className={`inline-block bg-gradient-to-r ${dynamicRoles[roleIndex].gradient} bg-clip-text text-transparent ${
+                  language === 'km' ? 'font-bold tracking-normal' : ''
+                }`}
               >
                 {language === 'km' ? dynamicRoles[roleIndex].km : dynamicRoles[roleIndex].en}
               </motion.span>
@@ -340,9 +348,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         </h1>
 
         {/* Hero Subtitle */}
-        <p className="mt-4 text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
+        <p className={`mt-4 text-sm sm:text-base text-slate-600 max-w-2xl mx-auto ${language === 'km' ? 'leading-relaxed font-normal tracking-normal' : 'leading-relaxed font-normal'}`}>
           {language === 'km'
-            ? 'ប្រមូលផ្តុំទិន្នន័យស្វ័យប្រវត្តពីគេហទំព័រការងារក្នុងស្រុក និងស្ថាប័នអន្តរជាតិ។ ត្រួតពិនិត្យភាពត្រឹមត្រូវ គ្មានទិន្នន័យស្ទួន និងងាយស្រួលតាមដានពាក្យស្នើសុំ។'
+            ? 'ប្រមូលផ្តុំទិន្នន័យស្វ័យប្រវត្តពីគេហទំព័រការងារក្នុងស្រុក និងស្ថាប័នអន្តរជាតិ គ្មានទិន្នន័យស្ទួន និងងាយស្រួលដាក់ពាក្យស្នើសុំ។'
             : 'Automated crawler pipeline indexing verified postings from CamHR, BongThom, CADT, and global university boards with instant tracking and direct apply links.'}
         </p>
 
@@ -392,9 +400,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   onChange={(e) => setLocationScope(e.target.value as LocationType | 'all')}
                   className="bg-transparent text-xs font-bold text-slate-700 hover:text-slate-900 focus:outline-none cursor-pointer pr-1"
                 >
-                  <option value="all">{language === 'km' ? 'គ្រប់ទីតាំង (All)' : 'All Regions'}</option>
-                  <option value="local">{language === 'km' ? 'កម្ពុជា (Local)' : 'Cambodia (Local)'}</option>
-                  <option value="international">{language === 'km' ? 'ក្រៅប្រទេស (Overseas)' : 'International (Overseas)'}</option>
+                  <option value="all">{language === 'km' ? 'គ្រប់ទីតាំងទាំងអស់' : 'All Regions'}</option>
+                  <option value="local">{language === 'km' ? 'កម្ពុជា (ក្នុងស្រុក)' : 'Cambodia (Local)'}</option>
+                  <option value="international">{language === 'km' ? 'ក្រៅប្រទេស (អន្តរជាតិ)' : 'International (Overseas)'}</option>
                 </select>
               </div>
             </div>
@@ -493,7 +501,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               <p className="text-xs font-bold text-slate-800">
                 {language === 'km' ? 'ប្រមូលស្វ័យប្រវត្ត' : 'Auto-Aggregated'}
               </p>
-              <p className="text-[10px] text-slate-500 font-medium">CamHR, BongThom, CADT</p>
+              <p className="text-[10px] text-slate-500 font-medium">
+                {language === 'km' ? 'ប្រភពការងារ & ស្ថាប័នផ្លូវការ' : 'CamHR, BongThom, CADT'}
+              </p>
             </div>
           </div>
 
@@ -506,7 +516,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 {language === 'km' ? 'គ្មានទិន្នន័យស្ទួន' : 'Zero Duplicates'}
               </p>
               <p className="text-[10px] text-slate-500 font-medium">
-                {language === 'km' ? 'ត្រួតពិនិត្យភាពត្រឹមត្រូវ' : 'Strict anti-spam hashing'}
+                {language === 'km' ? 'ត្រួតពិនិត្យភាពត្រឹមត្រូវខ្ពស់' : 'Strict anti-spam hashing'}
               </p>
             </div>
           </div>
@@ -534,7 +544,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 {language === 'km' ? 'ក្នុង & ក្រៅប្រទេស' : 'Global Pipeline'}
               </p>
               <p className="text-[10px] text-slate-500 font-medium">
-                {language === 'km' ? 'កម្ពុជា អង់គ្លេស ជប៉ុន' : 'Cambodia, UK, Japan, AU'}
+                {language === 'km' ? 'កម្ពុជា អង់គ្លេស ជប៉ុន អូស្ត្រាលី' : 'Cambodia, UK, Japan, AU'}
               </p>
             </div>
           </div>

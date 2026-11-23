@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { UserRole, LocationType, Language, User } from '@/types';
-import { getStoredUser, logoutUser } from '@/services/api';
+import { getStoredUser, logoutUser, getStoredLanguage, saveStoredLanguage } from '@/services/api';
 import {
   Globe,
   Languages,
@@ -32,14 +32,31 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentView = 'opportunities',
   setCurrentView,
   bookmarkCount = 0,
-  language = 'en',
+  language,
   setLanguage,
 }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [internalLang, setInternalLang] = useState<Language>('en');
 
   useEffect(() => {
     setCurrentUser(getStoredUser());
+    setInternalLang(getStoredLanguage());
   }, []);
+
+  const activeLang = language || internalLang;
+
+  const handleToggleLanguage = () => {
+    const next = activeLang === 'en' ? 'km' : 'en';
+    saveStoredLanguage(next);
+    if (setLanguage) {
+      setLanguage(next);
+    } else {
+      setInternalLang(next);
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = next;
+      }
+    }
+  };
 
   const handleLogout = () => {
     logoutUser();
@@ -49,14 +66,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navItems = [
     {
       id: 'opportunities' as const,
-      label: language === 'km' ? 'ស្វែងរកឱកាស' : 'Explore Catalog',
+      label: activeLang === 'km' ? 'ស្វែងរកឱកាស' : 'Explore Catalog',
       icon: Compass,
       color: 'text-blue-600',
       href: '/',
     },
     {
       id: 'tracker' as const,
-      label: language === 'km' ? 'កម្មវិធីតាមដាន' : 'My Applications',
+      label: activeLang === 'km' ? 'កម្មវិធីតាមដាន' : 'My Applications',
       icon: LayoutDashboard,
       color: 'text-purple-600',
       badge: bookmarkCount > 0 ? bookmarkCount : null,
@@ -64,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     },
     {
       id: 'curation' as const,
-      label: language === 'km' ? 'ការណែនាំពីសាស្ត្រាចារ្យ' : 'Curated Lists',
+      label: activeLang === 'km' ? 'ការណែនាំពីសាស្ត្រាចារ្យ' : 'Curated Lists',
       icon: GraduationCap,
       color: 'text-emerald-600',
       href: '/',
@@ -94,7 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium hidden sm:block">
-                {language === 'km' ? 'ការងារ កម្មសិក្សា & អាហារូបករណ៍' : 'Cambodia & Overseas Pipeline'}
+                {activeLang === 'km' ? 'ការងារ កម្មសិក្សា & អាហារូបករណ៍' : 'Cambodia & Overseas Pipeline'}
               </p>
             </div>
           </Link>
@@ -148,11 +165,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center space-x-2 sm:space-x-3">
             {/* Language Switcher */}
             <button
-              onClick={() => setLanguage && setLanguage(language === 'en' ? 'km' : 'en')}
+              onClick={handleToggleLanguage}
               className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors inline-flex items-center space-x-1.5 border border-slate-200/60"
             >
               <Languages className="w-3.5 h-3.5 text-slate-500" />
-              <span>{language === 'en' ? 'ខ្មែរ' : 'EN'}</span>
+              <span>{activeLang === 'en' ? 'ខ្មែរ' : 'EN'}</span>
             </button>
 
             {/* Clean Divider */}
@@ -232,7 +249,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="relative flex items-center space-x-2 px-4 py-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm hover:shadow-md hover:shadow-blue-500/25 active:scale-95 transition-all duration-200"
                 >
                   <LogIn className="w-3.5 h-3.5 text-blue-100 group-hover:scale-110 transition-transform" />
-                  <span>{language === 'km' ? 'ចូលគណនី' : 'Sign In'}</span>
+                  <span>{activeLang === 'km' ? 'ចូលគណនី' : 'Sign In'}</span>
                   <ArrowRight className="w-3 h-3 text-blue-200 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
               </div>

@@ -25,9 +25,9 @@ import { AlertSettingsModal } from '@/components/AlertSettingsModal';
 export default function ProfilePage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [fullName, setFullName] = useState('');
-  const [fieldOfStudy, setFieldOfStudy] = useState('Computer Science & Engineering');
-  const [educationLevel, setEducationLevel] = useState('Bachelor Year 4');
-  const [skillsList, setSkillsList] = useState<string[]>(['Python', 'FastAPI', 'Next.js', 'SQL']);
+  const [fieldOfStudy, setFieldOfStudy] = useState('');
+  const [educationLevel, setEducationLevel] = useState('');
+  const [skillsList, setSkillsList] = useState<string[]>([]);
   const [newSkillInput, setNewSkillInput] = useState('');
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [saving, setSaving] = useState(false);

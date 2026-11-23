@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Opportunity } from '@/types';
+import { Opportunity, Language } from '@/types';
 import {
   Calendar,
   DollarSign,
@@ -24,6 +24,7 @@ interface OpportunityCardProps {
   onTrack?: (opp: Opportunity) => void;
   onApply?: (opp: Opportunity) => void;
   isApplied?: boolean;
+  language?: Language;
 }
 
 export const OpportunityCard: React.FC<OpportunityCardProps> = ({
@@ -33,6 +34,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   onTrack,
   onApply,
   isApplied = false,
+  language = 'en',
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -136,13 +138,23 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
               </div>
               <div className="flex items-center space-x-1.5 mt-0.5">
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${theme.badge}`}>
-                  {opportunity.category}
+                  {language === 'km'
+                    ? opportunity.category === 'job'
+                      ? 'ការងារ'
+                      : opportunity.category === 'internship'
+                      ? 'កម្មសិក្សា'
+                      : opportunity.category === 'scholarship'
+                      ? 'អាហារូបករណ៍'
+                      : opportunity.category === 'upskilling'
+                      ? 'វគ្គបណ្តុះបណ្តាល'
+                      : 'កិច្ចការសាលា'
+                    : opportunity.category.replace('_', ' ')}
                 </span>
                 <span className="text-[11px] text-slate-500 font-medium inline-flex items-center space-x-1">
                   {opportunity.location_type === 'local' ? (
                     <>
                       <MapPin className="w-3 h-3 text-blue-500 shrink-0" />
-                      <span>{opportunity.province_city || 'Cambodia'}</span>
+                      <span>{opportunity.province_city || (language === 'km' ? 'កម្ពុជា' : 'Cambodia')}</span>
                     </>
                   ) : (
                     <>
@@ -189,13 +201,15 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
         {/* Title */}
         <h3
           onClick={() => onSelect(opportunity)}
-          className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors cursor-pointer line-clamp-2 leading-snug mb-2"
+          className={`text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors cursor-pointer line-clamp-2 mb-2 ${
+            language === 'km' ? 'leading-normal font-bold' : 'leading-snug'
+          }`}
         >
           {opportunity.title}
         </h3>
 
         {/* Short Description */}
-        <p className="text-xs text-slate-600 line-clamp-2 mb-3 leading-relaxed">
+        <p className={`text-xs text-slate-600 line-clamp-2 mb-3 ${language === 'km' ? 'leading-relaxed' : 'leading-relaxed'}`}>
           {opportunity.description}
         </p>
 
@@ -210,12 +224,18 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
 
           {opportunity.visa_sponsorship && (
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200/70">
-              Visa Included
+              {language === 'km' ? 'រាប់បញ្ចូលទិដ្ឋាការ' : 'Visa Included'}
             </span>
           )}
 
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 capitalize">
-            {opportunity.work_format.replace('_', '-')}
+            {language === 'km'
+              ? opportunity.work_format === 'on_site'
+                ? 'នៅកន្លែងផ្ទាល់'
+                : opportunity.work_format === 'hybrid'
+                ? 'ចម្រុះ'
+                : 'ពីចម្ងាយ'
+              : opportunity.work_format.replace('_', '-')}
           </span>
         </div>
 
@@ -238,10 +258,10 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
           {opportunity.deadline ? (
             <span className={isClosingSoon ? 'text-amber-700 font-bold' : 'font-medium'}>
               {new Date(opportunity.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              {isClosingSoon && ' (Closing Soon)'}
+              {isClosingSoon && (language === 'km' ? ' (ជិតផុតកំណត់)' : ' (Closing Soon)')}
             </span>
           ) : (
-            <span className="font-medium">Rolling</span>
+            <span className="font-medium">{language === 'km' ? 'គ្មានថ្ងៃកំណត់' : 'Rolling'}</span>
           )}
         </div>
 
@@ -251,19 +271,19 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
               onClick={(e) => {
                 e.stopPropagation();
                 onTrack(opportunity);
-                toast.success('Opportunity tracked in pipeline');
+                toast.success(language === 'km' ? 'បានបន្ថែមចូលកម្មវិធីតាមដាន' : 'Opportunity tracked in pipeline');
               }}
               className="px-2 py-1 text-[11px] font-semibold rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
               title="Track in Pipeline"
             >
-              Track
+              {language === 'km' ? 'តាមដាន' : 'Track'}
             </button>
           )}
 
           {isApplied ? (
             <span className="px-2.5 py-1 text-xs font-extrabold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center space-x-1">
               <Check className="w-3.5 h-3.5" />
-              <span>Applied</span>
+              <span>{language === 'km' ? 'បានដាក់ពាក្យ' : 'Applied'}</span>
             </span>
           ) : (
             <button
@@ -273,7 +293,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
               }}
               className="px-2.5 py-1 text-xs font-bold rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xs hover:shadow transition-all"
             >
-              Apply as Student
+              {language === 'km' ? 'ដាក់ពាក្យស្នើសុំ' : 'Apply as Student'}
             </button>
           )}
 
@@ -281,7 +301,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
             onClick={() => onSelect(opportunity)}
             className="px-3 py-1 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all inline-flex items-center space-x-1"
           >
-            <span>Details</span>
+            <span>{language === 'km' ? 'ព័ត៌មានលម្អិត' : 'Details'}</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
           </button>
         </div>

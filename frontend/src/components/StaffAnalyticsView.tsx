@@ -28,10 +28,10 @@ export const StaffAnalyticsView: React.FC = () => {
   const appsStarted = data?.applications_started ?? 0;
   const verifiedPostings = data?.verified_postings ?? 0;
   const categoryDist = data?.category_distribution || {
-    scholarship: 41,
-    job: 32,
-    internship: 18,
-    upskilling: 9,
+    scholarship: 0,
+    job: 0,
+    internship: 0,
+    upskilling: 0,
   };
 
   if (loading) {
@@ -128,40 +128,40 @@ export const StaffAnalyticsView: React.FC = () => {
             <div>
               <div className="flex justify-between font-semibold text-gray-700 mb-1">
                 <span>International Scholarships</span>
-                <span>{categoryDist.scholarship ?? 41}%</span>
+                <span>{categoryDist.scholarship ?? 0}%</span>
               </div>
               <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
-                <div className="bg-amber-500 h-full rounded-full" style={{ width: `${categoryDist.scholarship ?? 41}%` }}></div>
+                <div className="bg-amber-500 h-full rounded-full" style={{ width: `${categoryDist.scholarship ?? 0}%` }}></div>
               </div>
             </div>
 
             <div>
               <div className="flex justify-between font-semibold text-gray-700 mb-1">
                 <span>Local Software & Tech Jobs</span>
-                <span>{categoryDist.job ?? 32}%</span>
+                <span>{categoryDist.job ?? 0}%</span>
               </div>
               <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
-                <div className="bg-blue-600 h-full rounded-full" style={{ width: `${categoryDist.job ?? 32}%` }}></div>
+                <div className="bg-blue-600 h-full rounded-full" style={{ width: `${categoryDist.job ?? 0}%` }}></div>
               </div>
             </div>
 
             <div>
               <div className="flex justify-between font-semibold text-gray-700 mb-1">
                 <span>Student Internships</span>
-                <span>{categoryDist.internship ?? 18}%</span>
+                <span>{categoryDist.internship ?? 0}%</span>
               </div>
               <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
-                <div className="bg-purple-600 h-full rounded-full" style={{ width: `${categoryDist.internship ?? 18}%` }}></div>
+                <div className="bg-purple-600 h-full rounded-full" style={{ width: `${categoryDist.internship ?? 0}%` }}></div>
               </div>
             </div>
 
             <div>
               <div className="flex justify-between font-semibold text-gray-700 mb-1">
                 <span>Upskilling & Bootcamps</span>
-                <span>{categoryDist.upskilling ?? 9}%</span>
+                <span>{categoryDist.upskilling ?? 0}%</span>
               </div>
               <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
-                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${categoryDist.upskilling ?? 9}%` }}></div>
+                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${categoryDist.upskilling ?? 0}%` }}></div>
               </div>
             </div>
           </div>

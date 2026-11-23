@@ -100,6 +100,17 @@ async def list_opportunities(
     )
 
 
+@router.get("/counts")
+async def get_opportunity_counts(
+    db: AsyncSession = Depends(get_db),
+):
+    res = await db.execute(select(Opportunity.category, func.count(Opportunity.id)).group_by(Opportunity.category))
+    counts = {row[0].value: row[1] for row in res.all()}
+    total = sum(counts.values())
+    counts["all"] = total
+    return counts
+
+
 @router.get("/{opportunity_id}", response_model=OpportunityResponse)
 async def get_opportunity(
     opportunity_id: int,
