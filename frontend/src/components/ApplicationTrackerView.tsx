@@ -16,6 +16,7 @@ import {
   Building,
   MapPin,
   Globe,
+  Archive,
 } from 'lucide-react';
 
 interface ApplicationTrackerViewProps {
@@ -75,10 +76,39 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
       badgeBg: 'bg-emerald-100 text-emerald-800',
       icon: Award,
     },
+    {
+      id: 'rejected',
+      title: language === 'km' ? 'បណ្ណសារ' : 'Archived',
+      color: 'border-rose-300 text-rose-700',
+      badgeBg: 'bg-rose-100 text-rose-800',
+      icon: Archive,
+    },
+  ];
+
+  // Tracked applications whose listing is not in the loaded catalogue still need a card.
+  const knownIds = new Set(opportunities.map(o => o.id));
+  const placeholderFor = (id: number): Opportunity => ({
+    id,
+    title: language === 'km' ? `ឱកាស #${id}` : `Opportunity #${id}`,
+    organization: language === 'km' ? 'មិនមាននៅក្នុងបញ្ជីបច្ចុប្បន្ន' : 'Not in the current listing',
+    category: 'job',
+    location_type: 'local',
+    country: '',
+    work_format: 'on_site',
+    description: '',
+    visa_sponsorship: false,
+    source_url: '',
+    source_name: '',
+    is_verified: false,
+    created_at: '',
+  });
+  const trackedOpportunities: Opportunity[] = [
+    ...opportunities,
+    ...Object.keys(trackers).map(Number).filter(id => !knownIds.has(id)).map(placeholderFor),
   ];
 
   const getOpportunitiesByStatus = (status: ApplicationStatus) => {
-    return opportunities.filter(opp => trackers[opp.id] === status);
+    return trackedOpportunities.filter(opp => trackers[opp.id] === status);
   };
 
   const handleStageChange = (opportunity: Opportunity, newStatus: ApplicationStatus) => {
@@ -166,7 +196,7 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
       </div>
 
       {/* Kanban Board Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4 items-start">
         {columns.map(col => {
           const items = getOpportunitiesByStatus(col.id);
           const ColIcon = col.icon;
@@ -227,7 +257,7 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
                         </div>
 
                         <h4
-                          onClick={() => onSelect(opp)}
+                          onClick={() => knownIds.has(opp.id) && onSelect(opp)}
                           className="text-xs font-bold text-slate-900 group-hover:text-blue-600 cursor-pointer line-clamp-2 leading-snug"
                         >
                           {opp.title}

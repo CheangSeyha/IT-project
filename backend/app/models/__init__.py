@@ -1,5 +1,5 @@
 from app.core.database import Base
-from app.models.user import User, UserRole
+from app.models.user import User, UserRole, AlertSettings
 from app.models.opportunity import Opportunity, OpportunityCategory, LocationType, WorkFormat
 from app.models.tracking import Bookmark, ApplicationTracker, ApplicationStatus, CuratedCollection
 from app.models.scraper import ScraperSource, ScraperLog, ScraperStatus

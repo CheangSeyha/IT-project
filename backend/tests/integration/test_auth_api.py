@@ -29,7 +29,6 @@ async def test_register_invalid_email(client):
     assert res.status_code == 422
 
 
-@pytest.mark.xfail(strict=True, reason="BUG-01: public register can create an admin")
 async def test_register_cannot_create_admin(client):
     res = await client.post(f"{API}/register",
                             json={"email": "eve@x.com", "password": "pw", "full_name": "Eve", "role": "admin"})
@@ -55,7 +54,6 @@ async def test_login_missing_fields(client):
     assert (await client.post(f"{API}/login", data={})).status_code == 422
 
 
-@pytest.mark.xfail(strict=True, reason="BUG-06: OAuth2 tokenUrl points at missing /auth/login-form")
 async def test_oauth2_token_url_route_exists(client):
     res = await client.post(f"{API}/login-form", data={"username": STUDENT, "password": "password123"})
     assert res.status_code == 200
@@ -97,7 +95,6 @@ async def test_alert_settings_get_and_put(client, student_headers):
     assert res.status_code == 200 and res.json()["settings"]["frequency"] == "weekly"
 
 
-@pytest.mark.xfail(strict=True, reason="BUG-04: alert settings are not persisted")
 async def test_alert_settings_persist(client, student_headers):
     await client.put(f"{API}/alert-settings", json={"frequency": "weekly"}, headers=student_headers)
     got = (await client.get(f"{API}/alert-settings", headers=student_headers)).json()
@@ -133,7 +130,6 @@ async def test_change_role_invalid_role(client, admin_headers):
     assert res.status_code == 422
 
 
-@pytest.mark.xfail(strict=True, reason="BUG-11: last admin can demote themselves")
 async def test_last_admin_cannot_demote_self(client, admin_headers):
     me = (await client.get(f"{API}/me", headers=admin_headers)).json()
     res = await client.put(f"{API}/users/{me['id']}/role", json={"role": "student"}, headers=admin_headers)

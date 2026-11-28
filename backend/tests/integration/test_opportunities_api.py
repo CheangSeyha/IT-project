@@ -139,7 +139,6 @@ async def test_delete(client, admin_headers, student_headers):
     assert (await client.delete(f"{API}/{opp['id']}", headers=admin_headers)).status_code == 404
 
 
-@pytest.mark.xfail(strict=True, reason="BUG-07: teacher can delete any listing (no ownership)")
 async def test_teacher_cannot_delete_crawled_listing(client, teacher_headers):
     crawled = next(i for i in await all_items(client) if i["source_name"] != "OppHub Verified Listing")
     assert (await client.delete(f"{API}/{crawled['id']}", headers=teacher_headers)).status_code == 403

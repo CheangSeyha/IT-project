@@ -38,12 +38,10 @@ async def test_bookmarks_require_login(client):
     assert (await client.post(f"{API}/bookmarks/1")).status_code == 401
 
 
-@pytest.mark.xfail(strict=True, reason="BUG-02: bookmark on non-existent opportunity accepted")
 async def test_bookmark_missing_opportunity_404(client, student_headers):
     assert (await client.post(f"{API}/bookmarks/999999", headers=student_headers)).status_code == 404
 
 
-@pytest.mark.xfail(strict=True, reason="BUG-09: concurrent toggles create duplicate bookmarks")
 async def test_concurrent_bookmarks_no_duplicates(client, student_headers):
     await asyncio.gather(*[client.post(f"{API}/bookmarks/2", headers=student_headers) for _ in range(6)])
     async with async_session_maker() as s:
@@ -94,7 +92,6 @@ async def test_application_errors(client, student_headers):
     assert (await client.get(f"{API}/applications")).status_code == 401
 
 
-@pytest.mark.xfail(strict=True, reason="BUG-02: application on non-existent opportunity accepted")
 async def test_application_missing_opportunity_404(client, student_headers):
     res = await client.post(f"{API}/applications", json={"opportunity_id": 999999}, headers=student_headers)
     assert res.status_code == 404
@@ -145,7 +142,6 @@ async def test_analytics_verified_count_is_real(client, staff_headers):
     assert data["verified_postings"] == verified
 
 
-@pytest.mark.xfail(strict=True, reason="BUG-05: analytics uses invented minimum numbers")
 async def test_analytics_bookmarks_reflect_db(client, staff_headers):
     assert (await client.get(f"{API}/analytics", headers=staff_headers)).json()["student_bookmarks"] == 0
 

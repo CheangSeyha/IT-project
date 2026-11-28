@@ -153,7 +153,6 @@ def test_admin_manages_users_and_crawlers(http):
     assert http.delete(f"/scrapers/sources/{src['id']}", headers=a).status_code == 200
 
 
-@pytest.mark.xfail(strict=True, reason="BUG-01: a visitor can register as admin and take over")
 def test_visitor_cannot_become_admin(http):
     email = f"e2e-eve-{time.time_ns()}@x.kh"
     http.post("/auth/register", json={"email": email, "password": "x", "full_name": "Eve", "role": "admin"})

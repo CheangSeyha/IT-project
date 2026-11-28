@@ -58,12 +58,12 @@ describe('<ApplicationTrackerView>', () => {
       expect(screen.getByText(t)).toBeInTheDocument();
   });
 
-  it.fails('KNOWN BUG FE-05: a rejected ("Archived") application stays visible', () => {
+  it('FE-05 fixed: a rejected ("Archived") application stays visible', () => {
     setup({ 1: 'rejected' });
     expect(screen.getByText('Job One')).toBeInTheDocument();
   });
 
-  it.fails('KNOWN BUG FE-05: applications outside the current catalogue page are shown', () => {
+  it('FE-05 fixed: applications outside the current catalogue page are shown', () => {
     setup({ 1: 'applied', 99: 'interviewing' }, [opps[0]]);
     expect(within(document.body).getAllByRole('combobox')).toHaveLength(2);
   });

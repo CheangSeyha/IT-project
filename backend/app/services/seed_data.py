@@ -8,8 +8,8 @@ from app.models.scraper import ScraperSource, ScraperLog, ScraperStatus
 from app.models.tracking import CuratedCollection
 
 
-async def seed_initial_data(db: AsyncSession):
-    # Check if curated collections exist; if not, seed them even if users already exist
+async def _seed_curated_collections(db: AsyncSession):
+    # Seed curated collections once a teacher exists (works on first and later starts)
     cur_res = await db.execute(select(CuratedCollection).limit(1))
     if not cur_res.scalars().first():
         teacher_res = await db.execute(select(User).where(User.role == UserRole.TEACHER))
@@ -34,9 +34,12 @@ async def seed_initial_data(db: AsyncSession):
             db.add_all(initial_collections)
             await db.commit()
 
+
+async def seed_initial_data(db: AsyncSession):
     # Check if data already exists
     res = await db.execute(select(User).limit(1))
     if res.scalars().first():
+        await _seed_curated_collections(db)
         return  # Database already seeded
 
     # 1. Seed Users
@@ -452,3 +455,5 @@ async def seed_initial_data(db: AsyncSession):
     db.add_all(logs)
 
     await db.commit()
+
+    await _seed_curated_collections(db)

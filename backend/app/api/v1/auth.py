@@ -3,13 +3,13 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import verify_password, get_password_hash, create_access_token
-from app.models.user import User, UserRole
+from app.models.user import User, UserRole, AlertSettings
 from app.schemas.user import (
     UserCreate,
     UserResponse,
@@ -73,7 +73,8 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
         email=user_in.email,
         hashed_password=get_password_hash(user_in.password),
         full_name=user_in.full_name,
-        role=user_in.role,
+        # Admin accounts can only be granted by an existing admin.
+        role=UserRole.STUDENT if user_in.role == UserRole.ADMIN else user_in.role,
         field_of_study=user_in.field_of_study,
         education_level=user_in.education_level,
         skills=user_in.skills,
@@ -84,6 +85,7 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     return new_user
 
 
+@router.post("/login-form", response_model=Token, include_in_schema=False)
 @router.post("/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     res = await db.execute(select(User).where(User.email == form_data.username))
@@ -123,23 +125,33 @@ async def update_profile(
     return current_user
 
 
+ALERT_FIELDS = list(AlertSettingsUpdate.model_fields)
+
+
 @router.get("/alert-settings")
-async def get_alert_settings(current_user: User = Depends(get_current_active_user)):
-    return {
-        "frequency": "daily",
-        "email_enabled": True,
-        "telegram_enabled": True,
-        "deadline_alerts": True,
-        "scholarship_alerts": True,
-        "job_alerts": True,
-    }
+async def get_alert_settings(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    row = await db.get(AlertSettings, current_user.id)
+    if row is None:
+        return AlertSettingsUpdate().model_dump()
+    return {f: getattr(row, f) for f in ALERT_FIELDS}
 
 
 @router.put("/alert-settings")
 async def update_alert_settings(
     settings_in: AlertSettingsUpdate,
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
+    row = await db.get(AlertSettings, current_user.id)
+    if row is None:
+        row = AlertSettings(user_id=current_user.id)
+        db.add(row)
+    for f, v in settings_in.model_dump().items():
+        setattr(row, f, v)
+    await db.commit()
     return {"message": "Alert preferences saved successfully", "settings": settings_in}
 
 
@@ -171,6 +183,10 @@ async def update_user_role(
     user = res.scalars().first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    if user.role == UserRole.ADMIN and role_in.role != UserRole.ADMIN:
+        res = await db.execute(select(func.count()).select_from(User).where(User.role == UserRole.ADMIN))
+        if res.scalar_one() <= 1:
+            raise HTTPException(status_code=400, detail="Cannot remove the last admin")
     user.role = role_in.role
     await db.commit()
     await db.refresh(user)
