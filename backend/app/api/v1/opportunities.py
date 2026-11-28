@@ -17,6 +17,7 @@ from app.schemas.opportunity import (
 )
 
 router = APIRouter()
+MANUAL_SOURCE_NAME = "OppHub Verified Listing"
 
 
 @router.get("", response_model=OpportunityListResponse)
@@ -30,6 +31,7 @@ async def list_opportunities(
     visa_sponsorship: Optional[bool] = Query(None, description="Requires visa sponsorship"),
     is_verified: Optional[bool] = Query(None, description="Verified institutional listing"),
     closing_soon: Optional[bool] = Query(None, description="Deadline within next 14 days"),
+    field_of_study: Optional[str] = Query(None, description="Field of study (e.g. Information Technology)"),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -61,6 +63,8 @@ async def list_opportunities(
         conditions.append(Opportunity.visa_sponsorship == visa_sponsorship)
     if is_verified is not None:
         conditions.append(Opportunity.is_verified == is_verified)
+    if field_of_study:
+        conditions.append(Opportunity.field_of_study.ilike(f"%{field_of_study}%"))
     if closing_soon:
         now = datetime.utcnow()
         conditions.append(
@@ -179,6 +183,9 @@ async def delete_opportunity(
     opp = res.scalars().first()
     if not opp:
         raise HTTPException(status_code=404, detail="Opportunity not found")
+    # Crawled listings come from external sources; only admins may remove them.
+    if current_user.role != UserRole.ADMIN and opp.source_name != MANUAL_SOURCE_NAME:
+        raise HTTPException(status_code=403, detail="Only admins can delete crawled listings")
 
     await db.delete(opp)
     await db.commit()

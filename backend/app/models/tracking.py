@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Enum, ForeignKey, UniqueConstraint
 from app.core.database import Base
 
 
@@ -15,6 +15,7 @@ class ApplicationStatus(str, enum.Enum):
 
 class Bookmark(Base):
     __tablename__ = "bookmarks"
+    __table_args__ = (UniqueConstraint("user_id", "opportunity_id", name="uq_bookmark_user_opportunity"),)
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)

@@ -94,6 +94,7 @@ export async function fetchOpportunities(filters?: FilterState): Promise<{ items
     if (filters.visaSponsorshipOnly) params.append('visa_sponsorship', 'true');
     if (filters.verifiedOnly) params.append('is_verified', 'true');
     if (filters.closingSoonOnly) params.append('closing_soon', 'true');
+    if (filters.fieldOfStudy) params.append('field_of_study', filters.fieldOfStudy);
   }
 
   const response = await fetch(`${API_BASE_URL}/opportunities?${params.toString()}`, {
@@ -307,6 +308,9 @@ export async function fetchApplications(): Promise<Record<number, ApplicationSta
     headers: getAuthHeaders(),
   });
 
+  if (res.status === 401) {
+    throw new Error('Your session has expired. Please log in again.');
+  }
   if (!res.ok) {
     return {};
   }
@@ -352,7 +356,8 @@ export async function updateApplicationTracker(
     body: JSON.stringify({
       opportunity_id: opportunityId,
       status: status,
-      notes: notes,
+      // null tells the server to keep the existing notes (undefined would drop the key).
+      notes: notes ?? null,
     }),
   });
 

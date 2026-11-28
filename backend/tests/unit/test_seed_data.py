@@ -40,7 +40,6 @@ async def test_seed_is_idempotent(empty_session):
     assert await count(empty_session, Opportunity) == opps
 
 
-@pytest.mark.xfail(strict=True, reason="BUG-03: curated collections only seeded on 2nd start")
 async def test_seed_creates_curated_on_first_run(empty_session):
     await seed_initial_data(empty_session)
     assert await count(empty_session, CuratedCollection) >= 1

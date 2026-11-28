@@ -112,11 +112,13 @@ export default function HomePage() {
   // Fetch applications for current user if logged in
   useEffect(() => {
     if (currentUser) {
-      fetchApplications().then(appMap => {
-        if (appMap) {
-          setTrackers(appMap);
-        }
-      });
+      fetchApplications()
+        .then(appMap => {
+          if (appMap) {
+            setTrackers(appMap);
+          }
+        })
+        .catch((err: Error) => toast.error(err.message));
     }
   }, [currentUser]);
 

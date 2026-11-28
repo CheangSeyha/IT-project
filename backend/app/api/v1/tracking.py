@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, and_, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -20,6 +21,11 @@ from app.schemas.tracking import (
 )
 
 router = APIRouter()
+
+
+async def ensure_opportunity_exists(db: AsyncSession, opportunity_id: int) -> None:
+    if await db.get(Opportunity, opportunity_id) is None:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
 
 
 # --- Bookmarks ---
@@ -50,6 +56,7 @@ async def toggle_bookmark(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
+    await ensure_opportunity_exists(db, opportunity_id)
     res = await db.execute(
         select(Bookmark).where(Bookmark.user_id == current_user.id, Bookmark.opportunity_id == opportunity_id)
     )
@@ -61,7 +68,11 @@ async def toggle_bookmark(
     else:
         new_bm = Bookmark(user_id=current_user.id, opportunity_id=opportunity_id)
         db.add(new_bm)
-        await db.commit()
+        try:
+            await db.commit()
+        except IntegrityError:
+            # Another request added the same bookmark at the same moment.
+            await db.rollback()
         return {"bookmarked": True, "message": "Bookmark added"}
 
 
@@ -96,6 +107,7 @@ async def create_application_tracker(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
+    await ensure_opportunity_exists(db, tracker_in.opportunity_id)
     res = await db.execute(
         select(ApplicationTracker).where(
             ApplicationTracker.user_id == current_user.id,
@@ -105,7 +117,8 @@ async def create_application_tracker(
     existing = res.scalars().first()
     if existing:
         existing.status = tracker_in.status
-        existing.notes = tracker_in.notes
+        if tracker_in.notes is not None:
+            existing.notes = tracker_in.notes
         existing.updated_at = datetime.utcnow()
         await db.commit()
         await db.refresh(existing)

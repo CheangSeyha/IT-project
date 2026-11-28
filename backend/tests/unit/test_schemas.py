@@ -28,7 +28,6 @@ def test_user_create_requires_password_and_name():
         UserCreate(email="a@b.com")
 
 
-@pytest.mark.xfail(strict=True, reason="BUG-10: empty password is accepted")
 def test_user_create_rejects_empty_password():
     with pytest.raises(ValidationError):
         UserCreate(email="a@b.com", full_name="A", password="")

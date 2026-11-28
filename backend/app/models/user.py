@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Enum, Boolean, ForeignKey
 from app.core.database import Base
 
 
@@ -24,3 +24,15 @@ class User(Base):
     education_level = Column(String, nullable=True)
     skills = Column(String, nullable=True)  # Comma-separated or JSON string
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class AlertSettings(Base):
+    __tablename__ = "alert_settings"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    frequency = Column(String, default="daily", nullable=False)
+    email_enabled = Column(Boolean, default=True, nullable=False)
+    telegram_enabled = Column(Boolean, default=True, nullable=False)
+    deadline_alerts = Column(Boolean, default=True, nullable=False)
+    scholarship_alerts = Column(Boolean, default=True, nullable=False)
+    job_alerts = Column(Boolean, default=True, nullable=False)

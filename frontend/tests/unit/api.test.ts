@@ -52,9 +52,9 @@ describe('Authorization header', () => {
 
 // ---------- opportunities ----------
 describe('fetchOpportunities', () => {
-  it('sends no filter params for the default filters', async () => {
+  it('sends only page_size for the default filters', async () => {
     await api.fetchOpportunities(emptyFilters());
-    expect(lastCall().url.search).toBe('');
+    expect(lastCall().url.search).toBe('?page_size=100');
   });
 
   it('maps every supported filter to the right query param', async () => {
@@ -63,7 +63,7 @@ describe('fetchOpportunities', () => {
       country: 'Japan', workFormat: 'remote', visaSponsorshipOnly: true, verifiedOnly: true, closingSoonOnly: true,
     }));
     expect(Object.fromEntries(lastCall().url.searchParams)).toEqual({
-      q: 'python', category: 'job', location_type: 'local', province_city: 'Phnom Penh', country: 'Japan',
+      page_size: '100', q: 'python', category: 'job', location_type: 'local', province_city: 'Phnom Penh', country: 'Japan',
       work_format: 'remote', visa_sponsorship: 'true', is_verified: 'true', closing_soon: 'true',
     });
   });
@@ -79,15 +79,14 @@ describe('fetchOpportunities', () => {
     await expect(api.fetchOpportunities()).rejects.toThrow('Failed to fetch opportunities');
   });
 
-  it.fails('KNOWN BUG FE-01: requests a page size / page so more than 10 listings can be shown', async () => {
+  it('FE-01 fixed: requests a page size so more than 10 listings can be shown', async () => {
     await api.fetchOpportunities(emptyFilters());
-    const p = lastCall().url.searchParams;
-    expect(p.has('page') || p.has('page_size')).toBe(true);
+    expect(lastCall().url.searchParams.get('page_size')).toBe('100');
   });
 
-  it.fails('KNOWN BUG FE-02: field of study filter is sent', async () => {
+  it('FE-02 fixed: field of study filter is sent', async () => {
     await api.fetchOpportunities(emptyFilters({ fieldOfStudy: 'Information Technology' }));
-    expect(lastCall().url.search).not.toBe('');
+    expect(lastCall().url.searchParams.has('field_of_study')).toBe(true);
   });
 
   it('fetchOpportunityById returns null on 404', async () => {
@@ -179,7 +178,7 @@ describe('tracking', () => {
     });
   });
 
-  it.fails('KNOWN BUG FE-03: a stage change must not erase notes (sends no notes to the upsert)', async () => {
+  it('FE-03 fixed: a stage change must not erase notes (sends no notes to the upsert)', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({}));
     await api.updateApplicationTracker(3, 'interviewing');
     const body = JSON.parse(lastCall().init.body as string);
@@ -210,7 +209,7 @@ describe('tracking', () => {
     expect(await api.fetchScraperLogs()).toEqual([]);
   });
 
-  it.fails('KNOWN BUG FE-04: an expired session (401) is reported, not shown as an empty board', async () => {
+  it('FE-04 fixed: an expired session (401) is reported, not shown as an empty board', async () => {
     fetchMock.mockResolvedValueOnce(new Response('', { status: 401 }));
     await expect(api.fetchApplications()).rejects.toThrow();
   });
